@@ -22,10 +22,10 @@ export default function Onboarding4() {
   };
 
   return (
-    <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left font-['Inter'] h-auto flex flex-col items-start">
+    <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left h-auto flex flex-col items-start">
       {/* 상단 텍스트 영역 */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold leading-9 text-[#090a0a]">
+        <h2 className="font-['Inter'] text-xl font-bold leading-9 text-[#090a0a]">
           마지막으로,
           <br />
           관심사를 선택해 주세요

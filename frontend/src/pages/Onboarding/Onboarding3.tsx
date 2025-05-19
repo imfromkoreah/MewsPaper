@@ -14,7 +14,7 @@ export default function Onboarding3() {
     <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left">
       {/* 텍스트 영역 */}
       <div className="mb-4">
-        <h2 className="text-xl font-bold leading-9 text-[#090a0a]">
+        <h2 className="font-['Inter'] text-xl font-bold leading-9 text-[#090a0a]">
           매일 뉴스를 볼 시간을 골라 주세요
         </h2>
         <p className="text-sm text-[#090a0a]">

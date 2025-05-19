@@ -1,9 +1,10 @@
+//Onboarding 메인 화면 서브 화면으로 Onboarding1~4
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Onboarding1 from '../pages/Onboarding1';
-import Onboarding2 from '../pages/Onboarding2';
-import Onboarding3 from '../pages/Onboarding3';
-import Onboarding4 from '../pages/Onboarding4';
+import Onboarding1 from './Onboarding1';
+import Onboarding2 from './Onboarding2';
+import Onboarding3 from './Onboarding3';
+import Onboarding4 from './Onboarding4';
 
 const pages = [Onboarding1, Onboarding2, Onboarding3, Onboarding4];
 
