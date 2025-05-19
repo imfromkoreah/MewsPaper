@@ -43,7 +43,7 @@ export default function Onboarding() {
       <div className="flex justify-center mb-20">
         <button
           onClick={next}
-          className="w-[220px] px-8 py-4 bg-[#6a4dff] rounded-[48px] text-white text-base font-bold leading-none"
+          className="font-['Inter'] w-[220px] px-8 py-4 bg-[#6a4dff] rounded-[48px] text-white text-base font-bold leading-none"
         >
           {page === pages.length - 1 ? '시작하기' : '다음'}
         </button>
