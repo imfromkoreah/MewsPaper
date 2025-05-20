@@ -1,5 +1,8 @@
 // src/pages/Onboarding3.tsx
 import { useState } from 'react';
+import CheckOn from '../../assets/svg/check_on.svg';
+import CheckOff from '../../assets/svg/check_off.svg';
+import Warning from '../../assets/svg/warning.svg';
 
 export default function Onboarding3() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(1); // 기본 선택: 식후 루틴
@@ -11,7 +14,8 @@ export default function Onboarding3() {
   ];
 
   return (
-    <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left">
+    <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left relative">
+      <img src={Warning} alt="warning" className="absolute -top-4 left-6 w-6 h-6" />
       {/* 텍스트 영역 */}
       <div className="mb-4">
         <h2 className="font-['Inter'] text-xl font-bold leading-9 text-[#090a0a]">
@@ -30,11 +34,10 @@ export default function Onboarding3() {
             onClick={() => setSelectedIndex(index)}
             className="flex items-center w-full bg-white rounded-lg border border-[#e3e4e5] h-12 px-4"
           >
-            <div
-              className="w-[18px] h-[18px] rounded-full mr-3"
-              style={{
-                backgroundColor: selectedIndex === index ? '#86da52' : '#9a9a9a70',
-              }}
+            <img
+              src={selectedIndex === index ? CheckOn : CheckOff}
+              alt="check icon"
+              className="w-[18px] h-[18px] mr-3"
             />
             <span className="text-sm text-[#72777a]">{item.label}</span>
           </button>
