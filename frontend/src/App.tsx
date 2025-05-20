@@ -1,9 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Onboarding from './pages/Onboarding';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import News from './pages/Home/News';
-import Chat from './pages/Home/Chat';
+import HomePage from './pages/Home';
+import NewsPage from './pages/Home/NewsPage';
+import ChatPage from './pages/Home/ChatPage';
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
         path="/home"
         element={
           <Layout>
-            <Home />
+            <HomePage />
           </Layout>
         }
       />
@@ -25,7 +25,7 @@ function App() {
         path="/news"
         element={
           <Layout>
-            <News />
+            <NewsPage />
           </Layout>
         }
       />
@@ -34,7 +34,7 @@ function App() {
         path="/chat"
         element={
           <Layout>
-            <Chat />
+            <ChatPage />
           </Layout>
         }
       />
