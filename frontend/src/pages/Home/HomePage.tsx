@@ -4,7 +4,7 @@ import Message from '../../assets/svg/message.svg';
 import PurpleDot from '../../assets/svg/check_p.svg';
 import Week from '../../assets/svg/week.svg';
 
-const HomeMain = () => {
+const HomePage = () => {
   const attendanceIcons = new Array(7).fill(JellyOff);
 
   const today = new Date();
@@ -115,4 +115,4 @@ const HomeMain = () => {
   );
 };
 
-export default HomeMain;
+export default HomePage;

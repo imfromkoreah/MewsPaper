@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import GrayDot from '../../assets/svg/graydot.svg';
+import Paper from '../../assets/Paper.png'; // 신문 이미지 경로
 
 const tabs = [
   { id: 'general', label: '종합' },
@@ -21,15 +22,15 @@ export default function News() {
     const index = tabs.findIndex(tab => tab.id === activeTab);
     const tabEl = tabsRef.current[index];
     if (tabEl) {
-      const left = tabEl.offsetLeft - 12; // 왼쪽으로 여유 공간 확보
-      const width = tabEl.offsetWidth + 24; // 양쪽 여유 공간 합산
+      const left = tabEl.offsetLeft - 12;
+      const width = tabEl.offsetWidth + 24;
       setBarStyle({ left, width });
     }
   }, [activeTab]);
 
-
   return (
-    <main>
+    <main className="w-full flex flex-col items-center">
+      {/* 상단 영역 */}
       <div className="w-full h-[93px] relative mx-auto">
         {/* Top 10 뉴스 타이틀 */}
         <div className="absolute left-1/2 top-0 -translate-x-1/2 text-black text-[20px] font-bold font-['Pretendard'] leading-tight">
@@ -72,6 +73,20 @@ export default function News() {
               transform: `translateX(${barStyle.left}px)`,
             }}
           />
+        </div>
+      </div>
+
+      {/* 🔽 신문 이미지 위 텍스트 */}
+      <div className="mt-[120px] flex justify-center overflow-hidden">
+        <div className="w-[446px] overflow-hidden">
+          <img
+            src={Paper}
+            alt="신문 배경"
+            className=""
+          />
+          <div className="w-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-lg font-bold text-center drop-shadow-md whitespace-nowrap">
+            📰 {tabs.find(t => t.id === activeTab)?.label} 뉴스 하이라이트
+          </div>
         </div>
       </div>
     </main>
