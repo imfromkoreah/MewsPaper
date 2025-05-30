@@ -22,8 +22,9 @@ public class News {
     private String title;
 
     @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
+
 
     private String source;
 
