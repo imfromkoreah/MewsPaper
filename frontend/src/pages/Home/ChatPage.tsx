@@ -7,7 +7,7 @@ interface Message {
   delay: number;
 }
 
-// 🧠 프로필 + 이름 묶음 컴포넌트
+// 🐱 봇 프로필 + 닉네임 묶음 컴포넌트
 function ChatProfile() {
   return (
     <>
@@ -31,7 +31,7 @@ function ChatProfile() {
   );
 }
 
-// 💬 메시지 리스트
+// 🐱 메시지 리스트
 const messages: Message[] = [
   { id: 1, text: '안냥~ 나는 너만의 앵커 냥냥박사야!', delay: 500 },
   { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
@@ -39,7 +39,7 @@ const messages: Message[] = [
   { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
 ];
 
-// 💬 메시지 컴포넌트
+// 🐱 한 개의 봇 말풍선 메시지를 그리는 컴포넌트
 const ChatMessage = forwardRef<
   HTMLDivElement,
   {
@@ -47,18 +47,19 @@ const ChatMessage = forwardRef<
     isVisible: boolean;
     isLoading: boolean;
     topOffset: number;
+    textSize: string;
   }
->(({ text, isVisible, isLoading, topOffset }, ref) => {
+>(({ text, isVisible, isLoading, topOffset, textSize }, ref) => {
   return (
     <div
       ref={ref}
-      className={`max-w-[250px] px-4 py-2.5 absolute left-[51px] inline-flex justify-start items-center gap-2.5 overflow-hidden bg-[#f1f1f1] rounded-tr-[20px] rounded-bl-[20px] rounded-br-[20px] ${
+      className={`max-w-[280px] px-4 py-2.5 absolute left-[55px] inline-flex justify-start items-center gap-2.5 overflow-hidden bg-[#f1f1f1] rounded-tr-[20px] rounded-bl-[20px] rounded-br-[20px] ${
         isLoading ? 'h-10' : 'min-h-[40px]'
       }`}
       style={{ top: `${topOffset}px` }}
     >
       {isVisible ? (
-        <div className="text-[#1c283b] text-sm font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap">
+        <div className={`text-[#1c283b] font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}>
           {text}
         </div>
       ) : isLoading ? (
@@ -67,6 +68,29 @@ const ChatMessage = forwardRef<
     </div>
   );
 });
+
+// 🗨️ 사용자 말풍선 컴포넌트
+const UserChatMessage = forwardRef<
+  HTMLDivElement,
+  {
+    text: string;
+    topOffset: number;
+  }
+>(({ text, topOffset }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className="max-w-[280px] px-4 py-2.5 absolute right-[0px] inline-flex justify-end items-center gap-2.5 overflow-hidden bg-[#6B4EFF] rounded-tl-[20px] rounded-tr-[20px] rounded-bl-[20px] min-h-[40px]"
+      style={{ top: `${topOffset}px` }}
+    >
+      <div className="text-white font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap text-base">
+        {text}
+      </div>
+    </div>
+  );
+});
+
+
 
 // ⏳ 로딩 애니메이션
 function LoadingDots() {
@@ -83,10 +107,16 @@ function LoadingDots() {
 export default function ChatPage() {
   const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [inputVisible, setInputVisible] = useState<boolean>(false); // ✅ 입력창 상태
-  const [inputText, setInputText] = useState<string>(''); // 입력값 상태 추가
+  const [inputVisible, setInputVisible] = useState<boolean>(false);
+  const [inputText, setInputText] = useState<string>('');
+  const [textSize, setTextSize] = useState('text-base');
+
+  const [userMessages, setUserMessages] = useState<string[]>([]);
   const messageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const userMessageRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const [messageTops, setMessageTops] = useState<number[]>([]);
+  const [userMessageTops, setUserMessageTops] = useState<number[]>([]);
 
   useEffect(() => {
     const showMessages = async () => {
@@ -95,7 +125,7 @@ export default function ChatPage() {
         await new Promise((res) => setTimeout(res, messages[i].delay));
         setVisibleMessages((prev) => [...prev, messages[i].id]);
       }
-      setInputVisible(true); // ✅ 마지막 메시지 이후 입력창 표시
+      setInputVisible(true);
     };
     showMessages();
   }, []);
@@ -114,11 +144,32 @@ export default function ChatPage() {
         accHeight += el.offsetHeight + gap;
       } else {
         tops[i] = accHeight;
-        accHeight += 40 + gap; // 기본 높이 예상
+        accHeight += 40 + gap;
       }
     }
     setMessageTops(tops);
-  }, [visibleMessages]);
+  }, [visibleMessages, textSize]);
+
+  useLayoutEffect(() => {
+    userMessageRefs.current = userMessageRefs.current.slice(0, userMessages.length);
+
+    const tops: number[] = [];
+    const gap = 10;
+    let accHeight = messageTops.length > 0 ? messageTops[messageTops.length - 1] + 60 : 200;
+
+    for (let i = 0; i < userMessages.length; i++) {
+      const el = userMessageRefs.current[i];
+      if (el) {
+        tops[i] = accHeight;
+        accHeight += el.offsetHeight + gap;
+      } else {
+        tops[i] = accHeight;
+        accHeight += 40 + gap;
+      }
+    }
+
+    setUserMessageTops(tops);
+  }, [userMessages, messageTops]);
 
   return (
     <main className="w-full flex justify-center">
@@ -137,11 +188,20 @@ export default function ChatPage() {
               isVisible={isVisible}
               isLoading={!isVisible && isActive}
               text={msg.text}
+              textSize={textSize}
             />
           ) : null;
         })}
 
-        {/* ✅ 입력창 + 전송 버튼 렌더링 */}
+        {userMessages.map((msg, idx) => (
+          <UserChatMessage
+            key={`user-${idx}`}
+            ref={(el) => (userMessageRefs.current[idx] = el)}
+            text={msg}
+            topOffset={(userMessageTops[idx] ?? 0) + 30}
+          />
+        ))}
+
         {inputVisible && (
           <div
             className="fixed left-1/2 transform -translate-x-1/2 w-[400px] flex items-center space-x-2"
@@ -160,12 +220,12 @@ export default function ChatPage() {
               type="button"
               className={`w-16 h-12 rounded-[100px] text-white transition-colors ${
                 inputText.trim().length > 0
-                  ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                  ? 'bg-blue-400 hover:bg-blue-500 cursor-pointer'
                   : 'bg-gray-300 cursor-not-allowed'
               }`}
               disabled={inputText.trim().length === 0}
               onClick={() => {
-                alert(`전송: ${inputText}`);
+                setUserMessages((prev) => [...prev, inputText]);
                 setInputText('');
               }}
             >
