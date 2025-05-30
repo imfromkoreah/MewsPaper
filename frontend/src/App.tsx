@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Onboarding from './pages/Onboarding';
 import Layout from './components/Layout';
+import Splash from './pages/Splash';
 import HomePage from './pages/Home';
 import NewsPage from './pages/Home/NewsPage';
 import ChatPage from './pages/Home/ChatPage';
@@ -8,8 +9,10 @@ import ChatPage from './pages/Home/ChatPage';
 function App() {
   return (
     <Routes>
+      
       <Route path="/" element={<Navigate to="/onboarding" />} />
       <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/splash" element={<Splash />} />
 
       {/* Layout이 적용되는 라우트 그룹 */}
       <Route
