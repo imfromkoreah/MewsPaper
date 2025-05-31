@@ -1,8 +1,13 @@
-// src/pages/Onboarding2.tsx
-export default function Onboarding2() {
+import React from 'react';
+
+interface OnboardingProps {
+  name: string;
+  setName: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export default function Onboarding2({ name, setName }: OnboardingProps) {
   return (
     <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left">
-      {/* 텍스트 영역 */}
       <div className="mb-6">
         <h1 className="font-['Inter'] text-xl font-bold leading-9 text-[#090a0a]">
           고양이 앵커의 이름을 정해 주세요
@@ -16,6 +21,8 @@ export default function Onboarding2() {
         <input
           type="text"
           placeholder="냥냥박사"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           className="w-full h-12 px-4 bg-white rounded-lg border border-[#e3e4e5] text-base text-[#72777a] placeholder:text-[#72777a]/60 outline-none"
         />
       </div>
