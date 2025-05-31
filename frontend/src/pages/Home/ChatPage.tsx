@@ -37,7 +37,7 @@ const ChatMessage = forwardRef<HTMLDivElement, { text: string; isVisible: boolea
       style={{ top: topOffset }}
     >
       {isVisible ? (
-        <div className={`text-[#1c283b] font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}>{text}</div>
+        <div className={`text-[#1c283b] text-base font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}>{text}</div>
       ) : isLoading ? (
         <LoadingDots />
       ) : null}
