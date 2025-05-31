@@ -16,8 +16,8 @@ export default function Onboarding() {
   const next = async () => {
     if (page === 1) { // Onboarding2 페이지 (닉네임 입력)
       try {
-        await axios.post('http://localhost:4000/api/users/nickname', {
-          userId: 4284023611, // <<< 여기를 수정했습니다!
+        await axios.post('http://localhost:8080/api/users/nickname', {
+          userId: 4284023611, // <<< 서현님 kakao 테스트 id
           nickname: name,
         });
         alert('성공적으로 저장되었습니다!');
