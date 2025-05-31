@@ -1,18 +1,33 @@
-//Onboarding 메인 화면 서브 화면으로 Onboarding1~4
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Onboarding1 from './Onboarding1';
 import Onboarding2 from './Onboarding2';
 import Onboarding3 from './Onboarding3';
 import Onboarding4 from './Onboarding4';
+import axios from 'axios';
 
 const pages = [Onboarding1, Onboarding2, Onboarding3, Onboarding4];
 
 export default function Onboarding() {
   const [page, setPage] = useState(0);
+  const [name, setName] = useState('');
   const navigate = useNavigate();
 
-  const next = () => {
+  const next = async () => {
+    if (page === 1) { // Onboarding2 페이지 (닉네임 입력)
+      try {
+        await axios.post('http://localhost:4000/api/users/nickname', {
+          userId: 4284023611, // <<< 여기를 수정했습니다!
+          nickname: name,
+        });
+        alert('성공적으로 저장되었습니다!');
+      } catch (error) {
+        console.error('저장 중 오류 발생:', error);
+        alert('저장 실패!');
+        return;
+      }
+    }
+
     if (page < pages.length - 1) {
       setPage((prev) => prev + 1);
     } else {
@@ -20,16 +35,16 @@ export default function Onboarding() {
     }
   };
 
-  const PageComponent = pages[page];
-
+  const PageComponent = pages[page] as React.ComponentType<any>;
+  
   return (
     <div className="max-w-md mx-auto h-screen flex flex-col justify-between px-6 py-10 border border-gray-200 rounded shadow-sm">
-      {/* 온보딩 콘텐츠 */}
       <div className="flex-grow">
-        <PageComponent />
+        {page === 0
+          ? <PageComponent />
+          : <PageComponent name={name} setName={setName} />}
       </div>
 
-      {/* 인디케이터 */}
       <div className="flex justify-center items-center gap-2 mt-10 mb-14">
         {pages.map((_, i) => (
           <div
@@ -39,7 +54,6 @@ export default function Onboarding() {
         ))}
       </div>
 
-      {/* 버튼 */}
       <div className="flex justify-center mb-20">
         <button
           onClick={next}
