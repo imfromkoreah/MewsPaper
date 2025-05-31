@@ -1,7 +1,7 @@
 import newsChar from "../../assets/character/news.png";
 import kakaoIcon from "../../assets/svg/kakao.svg";
 import googleIcon from "../../assets/svg/google.svg";
-import appleIcon from "../../assets/svg/apple.svg";
+import naverIcon from "../../assets/svg/naver.svg";
 
 export default function Splash() {
   return (
@@ -30,17 +30,17 @@ export default function Splash() {
         <div className="absolute top-[520px] w-full flex flex-col items-center space-y-4">
           {/* 카카오 로그인 버튼 */}
           <button className="w-[294px] h-12 flex items-center justify-center bg-[#fee500] rounded-lg">
-            <img src={kakaoIcon} alt="카카오" className="w-[18px] h-[18px] mr-2" />
+            <img src={kakaoIcon} alt="카카오" className="w-[19px] h-[19px] mr-2" />
             <span className="text-[#111213] text-xs font-bold font-['Noto_Sans_KR']">
-              카카오로 로그인
+              Kakao로 로그인
             </span>
           </button>
 
-          {/* 애플 로그인 버튼 */}
-          <button className="w-[294px] h-12 flex items-center justify-center bg-neutral-100 rounded-lg">
-            <img src={appleIcon} alt="애플" className="w-[19px] h-[19px] mr-2" />
-            <span className="text-[#111213] text-xs font-bold font-['Noto_Sans_KR']">
-              Apple로 로그인
+          {/* 네이버 로그인 버튼 */}
+          <button className="w-[294px] h-12 flex items-center justify-center bg-[#2DB400] rounded-lg">
+            <img src={naverIcon} alt="네이버" className="w-[15px] h-[15px] mr-2" />
+            <span className="text-[#ffffff] text-xs font-bold font-['Noto_Sans_KR']">
+              Naver로 로그인
             </span>
           </button>
 
