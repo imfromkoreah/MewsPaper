@@ -74,7 +74,7 @@ export default function Login() {
             className="text-center mt-4 text-sm text-gray-500 cursor-pointer select-none"
             onClick={goToJoin}
           >
-            이미 계정이 없나요? <span className="underline">회원가입</span>
+            계정이 없나요? <span className="underline">회원가입</span>
           </p>
         </div>
       </div>
