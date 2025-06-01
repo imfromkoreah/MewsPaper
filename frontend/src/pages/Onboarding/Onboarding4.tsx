@@ -16,9 +16,16 @@ export default function Onboarding4() {
   const [selected, setSelected] = useState<string[]>([]);
 
   const toggleInterest = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelected((prev) => {
+      const isSelected = prev.includes(id);
+      if (isSelected) {
+        return prev.filter((i) => i !== id);
+      } else if (prev.length < 3) {
+        return [...prev, id];
+      } else {
+        return prev; // 3개 이상 선택 못하도록 제한
+      }
+    });
   };
 
   return (

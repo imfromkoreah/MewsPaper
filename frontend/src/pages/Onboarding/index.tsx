@@ -36,7 +36,7 @@ export default function Onboarding() {
     setSelectedRoutineIndex(index);
   }, []);
 
-const saveNicknameToBackend = async (userNickname: string) => {
+  const saveNicknameToBackend = async (userNickname: string) => {
     const userId = localStorage.getItem('userId');
 
     if (!userId) {
@@ -94,7 +94,7 @@ const saveNicknameToBackend = async (userNickname: string) => {
 
     if (match && match[1]) {
       const timeParts = match[1].split(' / ').map(t => t.trim());
-      
+
       times = timeParts.map(t => {
         if (t.startsWith('AM ')) {
           return t.substring(3);
@@ -116,9 +116,9 @@ const saveNicknameToBackend = async (userNickname: string) => {
     }));
 
     if (notificationsToSend.length === 0) {
-        console.warn("선택된 루틴에서 유효한 알림 시간을 파싱할 수 없습니다:", selectedRoutineLabel);
-        alert("알림 설정에 문제가 발생했습니다. 다른 루틴을 선택해주세요.");
-        return false;
+      console.warn("선택된 루틴에서 유효한 알림 시간을 파싱할 수 없습니다:", selectedRoutineLabel);
+      alert("알림 설정에 문제가 발생했습니다. 다른 루틴을 선택해주세요.");
+      return false;
     }
 
     try {
@@ -150,7 +150,6 @@ const saveNicknameToBackend = async (userNickname: string) => {
     }
   };
 
-
   const next = async () => {
     if (page === 1 && nickname.trim() === '') {
       setShowNicknameWarning(true);
@@ -179,37 +178,42 @@ const saveNicknameToBackend = async (userNickname: string) => {
   const PageComponent = pages[page];
 
   return (
-    <div className="max-w-md mx-auto h-screen flex flex-col justify-between px-6 py-10 border border-gray-200 rounded shadow-sm">
-      <div className="flex-grow">
-        {page === 1 ? (
-          <Onboarding2
-            onNicknameChange={handleNicknameChange}
-            nickname={nickname}
-            showWarning={showNicknameWarning}
-          />
-        ) : page === 2 ? (
-          <Onboarding3
-            onRoutineSelectionUpdate={handleRoutineSelectionUpdate}
-            selectedRoutineIndex={selectedRoutineIndex}
-          />
-        ) : (
-          <PageComponent />
-        )}
-      </div>
+    <div className="w-full h-screen flex justify-center bg-gray-100">
+      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white">
+        <div className="flex-grow">
+          {page === 1 ? (
+            <Onboarding2
+              onNicknameChange={handleNicknameChange}
+              nickname={nickname}
+              showWarning={showNicknameWarning}
+            />
+          ) : page === 2 ? (
+            <Onboarding3
+              onRoutineSelectionUpdate={handleRoutineSelectionUpdate}
+              selectedRoutineIndex={selectedRoutineIndex}
+            />
+          ) : (
+            <PageComponent />
+          )}
+        </div>
 
-      <div className="flex justify-center items-center gap-2 mt-10 mb-14">
-        {pages.map((_, i) => (
-          <div key={i} className={`w-3 h-3 rounded-full ${i === page ? 'bg-[#6a4dff]' : 'bg-gray-300'}`} />
-        ))}
-      </div>
+        <div className="flex justify-center items-center gap-2 mt-10 mb-14">
+          {pages.map((_, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full ${i === page ? 'bg-[#6a4dff]' : 'bg-gray-300'}`}
+            />
+          ))}
+        </div>
 
-      <div className="flex justify-center mb-20">
-        <button
-          onClick={next}
-          className="font-['Inter'] w-[220px] px-8 py-4 bg-[#6a4dff] rounded-[48px] text-white text-base font-bold leading-none"
-        >
-          {page === pages.length - 1 ? '시작하기' : '다음'}
-        </button>
+        <div className="flex justify-center mb-20">
+          <button
+            onClick={next}
+            className="font-['Inter'] w-[220px] px-8 py-4 bg-[#6a4dff] rounded-[48px] text-white text-base font-bold leading-none"
+          >
+            {page === pages.length - 1 ? '시작하기' : '다음'}
+          </button>
+        </div>
       </div>
     </div>
   );
