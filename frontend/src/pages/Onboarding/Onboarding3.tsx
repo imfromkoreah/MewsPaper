@@ -1,22 +1,33 @@
-// src/pages/Onboarding3.tsx
-import { useState } from 'react';
+// src/pages/Onboarding/Onboarding3.tsx
+
+import React, { useState } from 'react';
 import CheckOn from '../../assets/svg/check_on.svg';
 import CheckOff from '../../assets/svg/check_off.svg';
 import Warning from '../../assets/svg/warning.svg';
 
-export default function Onboarding3() {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(1); // 기본 선택: 식후 루틴
+interface Onboarding3Props {
+  // onRoutineSelectionUpdate는 number 또는 null을 인자로 받는 함수입니다.
+  onRoutineSelectionUpdate: (index: number | null) => void;
+  // selectedRoutineIndex는 number 또는 null 타입입니다.
+  selectedRoutineIndex: number | null;
+}
 
+export default function Onboarding3({ onRoutineSelectionUpdate, selectedRoutineIndex }: Onboarding3Props) {
   const routines = [
     { label: '출퇴근 루틴 (AM 8:00 / PM 18:30)' },
     { label: '식후 루틴 (PM 12:30 / PM 19:30)' },
     { label: '잠자리 루틴 (AM 8:00 / PM 22:00)' },
   ];
 
+  const handleRoutineClick = (index: number) => {
+    const newSelectedIndex = selectedRoutineIndex === index ? null : index;
+    // 부모의 콜백 함수를 호출하여 선택된 인덱스를 전달합니다.
+    onRoutineSelectionUpdate(newSelectedIndex);
+  };
+
   return (
     <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left relative">
       <img src={Warning} alt="warning" className="absolute -top-4 left-6 w-6 h-6" />
-      {/* 텍스트 영역 */}
       <div className="mb-4">
         <h2 className="font-['Inter'] text-[22px] font-bold leading-9 text-[#090a0a]">
           매일 뉴스를 볼 시간을 골라 주세요
@@ -26,16 +37,15 @@ export default function Onboarding3() {
         </p>
       </div>
 
-      {/* 루틴 선택 리스트 */}
       <div className="space-y-4">
         {routines.map((item, index) => (
           <button
             key={index}
-            onClick={() => setSelectedIndex(index)}
+            onClick={() => handleRoutineClick(index)}
             className="flex items-center w-full bg-white rounded-lg border border-[#e3e4e5] h-12 px-4"
           >
             <img
-              src={selectedIndex === index ? CheckOn : CheckOff}
+              src={selectedRoutineIndex === index ? CheckOn : CheckOff}
               alt="check icon"
               className="w-[18px] h-[18px] mr-3"
             />
@@ -44,7 +54,6 @@ export default function Onboarding3() {
         ))}
       </div>
 
-      {/* 하단 설명 */}
       <p className="text-xs text-[#6c7072] mt-4">
         나중에 설정에서 변경할 수 있어요!
       </p>
