@@ -50,6 +50,7 @@ export default function Splash() {
   }
 
   return (
+    
     <div className="max-w-md mx-auto h-screen flex flex-col justify-between px-6 py-10 border border-gray-200 rounded shadow-sm">
       <div className="w-[375px] h-[812px] relative bg-white rounded-[32px] overflow-hidden">
         <img
