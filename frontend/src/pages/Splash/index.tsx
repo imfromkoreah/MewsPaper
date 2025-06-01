@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';  // 추가
+import { useNavigate } from 'react-router-dom';
 import newsChar from "../../assets/character/news.png";
 import kakaoIcon from "../../assets/svg/kakao.svg";
 import googleIcon from "../../assets/svg/google.svg";
@@ -9,12 +9,16 @@ import KakaoLogin from './hooks/index';
 
 const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY;
 
-if (!KAKAO_APP_KEY || KAKAO_APP_KEY === 'YOUR_KAKAO_JAVASCRIPT_APP_KEY' || typeof KAKAO_APP_KEY === 'undefined') {
+if (
+  !KAKAO_APP_KEY ||
+  KAKAO_APP_KEY === 'YOUR_KAKAO_JAVASCRIPT_APP_KEY' ||
+  typeof KAKAO_APP_KEY === 'undefined'
+) {
   console.error("환경 변수 VITE_KAKAO_JAVASCRIPT_KEY가 설정되지 않았거나 기본값입니다. .env 파일을 확인해주세요.");
 }
 
 export default function Splash() {
-  const navigate = useNavigate();  // 추가
+  const navigate = useNavigate();
 
   const {
     startKakaoLogin,
@@ -31,7 +35,11 @@ export default function Splash() {
     }
   }, [isLoggedIn, userData]);
 
-  if (!KAKAO_APP_KEY || KAKAO_APP_KEY === 'YOUR_KAKAO_JAVASCRIPT_APP_KEY' || typeof KAKAO_APP_KEY === 'undefined') {
+  if (
+    !KAKAO_APP_KEY ||
+    KAKAO_APP_KEY === 'YOUR_KAKAO_JAVASCRIPT_APP_KEY' ||
+    typeof KAKAO_APP_KEY === 'undefined'
+  ) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white text-red-500">
         <p>환경 변수 VITE_KAKAO_JAVASCRIPT_KEY가 설정되지 않았습니다.</p>
@@ -58,8 +66,11 @@ export default function Splash() {
             뉴스 한입
           </div>
         </div>
-        <div className="absolute top-[520px] w-full flex flex-col items-center space-y-4">
-          <button className="w-[294px] h-12 flex items-center justify-center bg-[#fee500] rounded-lg" onClick={startKakaoLogin}>
+        <div className="absolute top-[515px] w-full flex flex-col items-center space-y-4">
+          <button
+            className="w-[294px] h-12 flex items-center justify-center bg-[#fee500] rounded-lg"
+            onClick={startKakaoLogin}
+          >
             <img src={kakaoIcon} alt="카카오" className="w-[18px] h-[18px] mr-2" />
             <span className="text-[#111213] text-xs font-bold font-['Noto_Sans_KR']">
               Kakao로 로그인
@@ -77,17 +88,15 @@ export default function Splash() {
               Google로 로그인
             </span>
           </button>
-          <div className="pt-2">
-            <span className="text-[#7d7d7d] text-xs font-normal font-['Noto_Sans_KR']">
-              계정이 없나요?{" "}
+          <button
+            className="w-[294px] h-12 flex items-center justify-center bg-white border border-gray-200 rounded-lg"
+            onClick={() => navigate('/login')}
+          >
+            <span className="text-[#111213] text-xs font-bold font-['Noto_Sans_KR']">
+              이메일로 로그인
             </span>
-            <button
-              onClick={() => navigate('/join')}  // 수정된 부분
-              className="text-[#7d7d7d] text-xs font-normal font-['Noto_Sans_KR'] underline focus:outline-none"
-            >
-              회원가입
-            </button>
-          </div>
+          </button>
+
         </div>
       </div>
     </div>
