@@ -15,7 +15,6 @@ const isValidEmail = (email: string) => {
   return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
 };
 
-
   // 비밀번호 유효성 체크: 영문, 숫자, 특수문자 포함 8자 이상
   const isValidPassword = (pw: string) => {
     return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]).{8,}$/.test(pw);
