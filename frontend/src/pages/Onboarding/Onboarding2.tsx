@@ -9,7 +9,7 @@ export default function Onboarding2({ name, setName }: OnboardingProps) {
   return (
     <div className="w-[375px] mx-auto px-6 py-4 mt-12 text-left">
       <div className="mb-6">
-        <h1 className="font-['Inter'] text-xl font-bold leading-9 text-[#090a0a]">
+        <h1 className="font-['Inter'] text-[22px] font-bold leading-9 text-[#090a0a]">
           고양이 앵커의 이름을 정해 주세요
         </h1>
         <p className="text-sm text-[#090a0a]">
