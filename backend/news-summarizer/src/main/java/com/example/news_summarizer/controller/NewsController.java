@@ -15,7 +15,7 @@ public class NewsController {
     }
 
     @PostMapping("/crawl/{categoryId}")
-    public ResponseEntity<String> crawl(@PathVariable String categoryId) {
+    public ResponseEntity<String> crawl(@PathVariable int categoryId) {
         crawlerService.crawl(categoryId);
         return ResponseEntity.ok("카테고리 " + categoryId + " 크롤링 완료");
     }
