@@ -21,7 +21,7 @@ public class CrawlerService {
         this.newsRepository = newsRepository;
     }
 
-    public void crawl(String categoryId) {
+    public void crawl(int categoryId) {
         try {
             String baseUrl = "https://news.naver.com/section/" + categoryId;
             Document doc = Jsoup.connect(baseUrl).userAgent("Mozilla/5.0").get();
@@ -42,7 +42,7 @@ public class CrawlerService {
             }
 
             for (String uniqueLink : uniqueLinks) {
-                processArticle(uniqueLink);
+                processArticle(uniqueLink, categoryId);
             }
 
         } catch (IOException e) {
@@ -50,7 +50,7 @@ public class CrawlerService {
         }
     }
 
-    private void processArticle(String uniqueLink) {
+    private void processArticle(String uniqueLink, int categoryId) {
         try {
             String url = "https://n.news.naver.com/article/" + uniqueLink;
 
@@ -71,6 +71,7 @@ public class CrawlerService {
                     .uniqueLink(uniqueLink) // PK 설정
                     .title(title.isBlank() ? "제목 없음" : title)
                     .content(content)
+                    .categoryId(categoryId)
                     .url(url)
                     .thumbnailUrl(thumbnailUrl)
                     .build();

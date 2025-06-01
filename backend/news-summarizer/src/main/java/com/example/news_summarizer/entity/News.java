@@ -25,6 +25,8 @@ public class News {
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
+    @Column(name = "category_id")
+    private Integer categoryId;
 
     private String source;
 
