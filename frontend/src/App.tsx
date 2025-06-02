@@ -8,6 +8,7 @@ import HomePage from './pages/Home';
 import NewsPage from './pages/Home/NewsPage';
 import ChatPage from './pages/Home/ChatPage';
 
+
 import NotificationPage from './pages/Home/NotificationPage';
 
 import SettingsPage from './pages/Settings/SettingsPage';
