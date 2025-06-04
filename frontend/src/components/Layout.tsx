@@ -8,7 +8,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <div className="w-full max-w-md border border-gray-200 rounded shadow-sm bg-white min-h-screen relative">
         
         {/* TopNav 고정 */}
-        <div className="fixed top-0 left-1/2 transform -translate-x-1/2 w-full max-w-md  border-gray-200 bg-white z-10">
+        <div className="fixed top-0 left-1/2 transform -translate-x-1/2 w-full max-w-md  border-gray-200 bg-white z-30">
           <TopNav />
         </div>
         
@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </main>
         
         {/* BottomNav 고정 */}
-        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md  border-gray-200 bg-white z-10">
+        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md  border-gray-200 bg-white z-30">
           <BottomNav />
         </div>
       </div>
