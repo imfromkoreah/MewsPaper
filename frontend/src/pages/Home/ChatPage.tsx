@@ -154,7 +154,7 @@ export default function ChatPage() {
         ))}
 
         {inputVisible && (
-          <div className="fixed left-1/2 transform -translate-x-1/2 w-[400px] flex items-center space-x-2" style={{ bottom: 70, zIndex: 20 }}>
+          <div className="fixed left-1/2 transform -translate-x-1/2 w-[370px] flex items-center space-x-2" style={{ bottom: 70, zIndex: 20 }}>
             <div className="flex-1 h-12 bg-[#e3e4e5] rounded-full relative">
               <input
                 type="text"
