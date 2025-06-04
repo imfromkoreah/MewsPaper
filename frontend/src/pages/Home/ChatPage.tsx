@@ -9,7 +9,7 @@ interface Message {
 
 // 🐱 메시지 리스트
 const messages: Message[] = [
-  { id: 1, text: '안냥~ 나는 너만의 앵커 냥냥박사야!', delay: 500 },
+  { id: 1, text: '안냥🐱~ 너만의 앵커 냥냥박사야!', delay: 500 },
   { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
   { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
   { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
@@ -31,7 +31,7 @@ const ChatMessage = forwardRef<HTMLDivElement, { text: string; isVisible: boolea
   ({ text, isVisible, isLoading, topOffset, textSize }, ref) => (
     <div
       ref={ref}
-      className={`max-w-[280px] px-4 py-2.5 absolute left-[55px] inline-flex items-center gap-2.5 overflow-hidden bg-[#f1f1f1] rounded-tr-[20px] rounded-bl-[20px] rounded-br-[20px] ${
+      className={`max-w-[260px] px-4 py-2.5 absolute left-[55px] inline-flex items-center gap-2.5 overflow-hidden bg-[#f1f1f1] rounded-tr-[20px] rounded-bl-[20px] rounded-br-[20px] ${
         isLoading ? 'h-10' : 'min-h-[40px]'
       }`}
       style={{ top: topOffset }}
@@ -49,7 +49,7 @@ const ChatMessage = forwardRef<HTMLDivElement, { text: string; isVisible: boolea
 const UserChatMessage = forwardRef<HTMLDivElement, { text: string; topOffset: number }>(({ text, topOffset }, ref) => (
   <div
     ref={ref}
-    className="max-w-[280px] px-4 py-2.5 absolute right-0 inline-flex justify-end items-center gap-2.5 overflow-hidden bg-[#6B4EFF] rounded-tl-[20px] rounded-tr-[20px] rounded-bl-[20px] min-h-[40px]"
+    className="max-w-[260px] px-4 py-2.5 absolute right-0 inline-flex justify-end items-center gap-2.5 overflow-hidden bg-[#6B4EFF] rounded-tl-[20px] rounded-tr-[20px] rounded-bl-[20px] min-h-[40px]"
     style={{ top: topOffset }}
   >
     <div className="text-white font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap text-base">{text}</div>
@@ -125,7 +125,7 @@ export default function ChatPage() {
 
   return (
     <main className="w-full flex justify-center">
-      <div className="w-[400px] min-h-[300px] relative pb-20">
+      <div className="w-[365px] min-h-[300px] relative pb-20 mt-2">
         <ChatProfile />
 
         {messages.map((msg, idx) => {

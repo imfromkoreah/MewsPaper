@@ -8,7 +8,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title, onBack }) => {
   return (
-    <header className="w-full bg-white px-4 py-3 flex items-center justify-between">
+    <header className="w-full bg-white px-6 py-4 flex items-center justify-between">
       {/* 뒤로가기 버튼 */}
       <button
         type="button"

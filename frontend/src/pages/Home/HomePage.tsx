@@ -17,7 +17,7 @@ const HomePage = () => {
   return (
     <div className="flex flex-col items-center space-y-10 pt-10 pb-16 px-6">
       {/* 출석 박스 */}
-      <div className="w-[311px] h-[198px] relative rounded-[20px] mb-12">
+      <div className="w-[311px] h-[198px] relative rounded-[20px] mb-6">
         <div className="w-[311px] h-[198px] left-0 top-0 absolute bg-white rounded-2xl border border-[#cacaca]/50" />
 
         {/* 날짜 + 요일 아이콘 버튼 */}
@@ -88,6 +88,9 @@ const HomePage = () => {
         </div>
         <div className="left-[235px] top-[62px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
           현대차에서 <br />전기차 최초공개
+        </div>
+        <div className="absolute left-1/2 top-[340px] transform -translate-x-1/2 text-center text-[#666666] text-sm font-medium">
+          Level 1
         </div>
       </div>
     </div>
