@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import newsChar from "../../assets/character/news.png";
 import kakaoIcon from "../../assets/svg/kakao.svg";
 import googleIcon from "../../assets/svg/google.svg";
-import appleIcon from "../../assets/svg/apple.svg";
 import naverIcon from "../../assets/svg/naver.svg";
 import KakaoLogin from './hooks/index';
 
@@ -56,9 +55,9 @@ export default function Splash() {
         <img
           src={newsChar}
           alt="newsChar"
-          className="w-[320px] h-auto object-contain mx-auto mt-12"
+          className="w-[320px] h-auto object-contain mx-auto mt-8"
         />
-        <div className="absolute top-[380px] w-full flex flex-col items-center">
+        <div className="absolute top-[360px] w-full flex flex-col items-center">
           <div className="text-2xl font-bold font-['Pretendard'] leading-loose text-center">
             <span className="text-[#090a0a]">Mews</span>
             <span className="text-[#6b4eff]">Paper</span>
@@ -67,7 +66,7 @@ export default function Splash() {
             뉴스 한입
           </div>
         </div>
-        <div className="absolute top-[515px] w-full flex flex-col items-center space-y-4">
+        <div className="absolute top-[490px] w-full flex flex-col items-center space-y-4">
           <button
             className="w-[294px] h-12 flex items-center justify-center bg-[#fee500] rounded-lg"
             onClick={startKakaoLogin}
