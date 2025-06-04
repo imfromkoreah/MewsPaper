@@ -133,62 +133,61 @@ export default function News() {
             해당 카테고리의 뉴스가 없습니다.
           </div>
         ) : (
-<HTMLFlipBook
-  width={370}
-  height={490}
-  className="relative z-20 overflow-hidden"
-  showCover={false}
-  size="fixed"
-  maxShadowOpacity={0.3}
-  mobileScrollSupport={true}
-  style={{
-    boxSizing: 'border-box',
-    backgroundColor: 'transparent',
-    marginTop: '-70px',
-  }}
->
-  {articles.map((article, index) => (
-    <div
-      key={article.uniqueLink}
-      className="flex flex-col items-center justify-start bg-[#E4E4E4] shadow-md h-full p-5 box-border"
-      style={{
-        maxWidth: '430px',
-        maxHeight: '490px', // FlipBook 높이와 맞춤
-        backgroundColor: 'transparent',
-      }}
-    >
-      {/* 랭킹 태그를 절대 위치 대신 플렉스 박스 상단에 넣기 */}
-      <div className="w-full flex justify-start mb-3">
-        <div className="px-3 py-1 bg-[#6B4EFF]/70 rounded-2xl inline-block">
-          <div className="text-[#ffffff] text-sm font-medium">
-            정치 <span className="font-bold">{index + 1}위</span>
-          </div>
-        </div>
-      </div>
+          <HTMLFlipBook
+            width={370}
+            height={490}
+            className="relative z-20 overflow-hidden"
+            showCover={false}
+            size="fixed"
+            maxShadowOpacity={0.3}
+            mobileScrollSupport={true}
+            style={{
+              boxSizing: 'border-box',
+              backgroundColor: 'transparent',
+              marginTop: '-70px',
+            }}
+          >
+            {articles.map((article, index) => (
+              <div
+                key={article.uniqueLink}
+                className="flex flex-col items-center justify-start bg-[#E4E4E4] shadow-md h-full p-5 box-border"
+                style={{
+                  maxWidth: '430px',
+                  maxHeight: '490px', // FlipBook 높이와 맞춤
+                  backgroundColor: 'transparent',
+                }}
+              >
+                {/* 랭킹 태그를 절대 위치 대신 플렉스 박스 상단에 넣기 */}
+                <div className="w-full flex justify-start mb-3">
+                  <div className="px-3 py-1 bg-[#6B4EFF]/70 rounded-2xl inline-block">
+                    <div className="text-[#ffffff] text-sm font-medium">
+                      정치 <span className="font-bold">{index + 1}위</span>
+                    </div>
+                  </div>
+                </div>
 
-      <h3 className="font-bold text-lg mb-2 w-full max-w-[350px] text-left line-clamp-2">
-        {article.title}
-      </h3>
-      <p className="mb-2 text-sm text-black-600">
-        날짜 데이터 가져오기{article.createdAt}
-      </p>
-      <div className="w-full max-w-[350px] border-b border-gray-400 mb-4" />
+                <h3 className="font-bold text-lg mb-2 w-full max-w-[350px] text-left line-clamp-2">
+                  {article.title}
+                </h3>
+                <p className="mb-2 text-sm text-black-600">
+                  날짜 데이터 가져오기{article.createdAt}
+                </p>
+                <div className="w-full max-w-[350px] border-b border-gray-400 mb-4" />
 
-      <img
-        src={article.thumbnailUrl}
-        alt="썸네일"
-        className="max-w-[250px] max-h-[150px] mb-3 rounded shadow"
-      />
-      <p className="text-sm line-clamp-5 text-center overflow-hidden">{article.content}</p>
-    </div>
-  ))}
-</HTMLFlipBook>
-
+                <img
+                  src={article.thumbnailUrl}
+                  alt="썸네일"
+                  className="max-w-[250px] max-h-[150px] mb-3 rounded shadow"
+                />
+                <p className="text-sm line-clamp-5 text-center overflow-hidden">{article.content}</p>
+              </div>
+            ))}
+          </HTMLFlipBook>
         )}
       </div>
 
       {/* 좌우 버튼 (필요시 사용 가능) */}
-      {/*
+      {/* 
       <button
         className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 px-2 py-1 rounded-r text-black"
         onClick={handlePrev}
