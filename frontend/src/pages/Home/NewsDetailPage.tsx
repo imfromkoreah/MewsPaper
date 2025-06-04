@@ -17,9 +17,7 @@ export default function NewsDetailPage() {
   const [disliked, setDisliked] = useState(false);
   const [clipped, setClipped] = useState(false);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
 
   const toggleLike = () => {
     setLiked((prev) => !prev);
@@ -31,102 +29,89 @@ export default function NewsDetailPage() {
     if (liked) setLiked(false);
   };
 
-  const toggleClip = () => {
-    setClipped((prev) => !prev);
-  };
+  const toggleClip = () => setClipped((prev) => !prev);
 
   return (
-    <div className="w-full h-screen flex justify-center bg-gray-100">
-      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white overflow-hidden">
+    <div className="w-full h-screen flex justify-center bg-gray-100 overflow-auto">
+      {/* 스크롤은 여기서 발생 */}
+      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white overflow-visible">
         <Header title="뉴스 확대" onBack={handleBack} />
 
-        {/* 뉴스 본문 콘텐츠 영역 */}
-        <div className="flex-1 overflow-auto">
-          <div className="relative w-[375px] h-[625px] px-4 pt-4">
-            {/* 헤드라인 + 날짜 */}
-            <div className="mb-8">
-              <div className="text-[21px] font-bold leading-loose text-[#090a0a]">
-                뉴욕 허드슨강 헬기 추락... 탑승자 6명 전원 사망
-              </div>
-              <div className="text-sm text-[#090a0a] font-normal leading-normal">
-                2025.04.11. 금요일 오전
+        <div className="flex-1 overflow-auto relative px-5 pt-4 pb-20 mt-3">
+          {/* 랭킹 태그 */}
+          <div className="absolute left-5 top-0">
+            <div className="px-3 py-1 bg-[#f9f5ff] rounded-2xl">
+              <div className="text-[#6840c6] text-sm font-medium">
+                세계 <span className="font-bold">1위</span>
               </div>
             </div>
+          </div>
 
-            {/* 랭킹 태그 */}
-            <div className="absolute left-4 top-0 mix-blend-multiply">
-              <div className="px-3 py-1 bg-[#f9f5ff] rounded-2xl">
-                <div className="text-[#6840c6] text-sm font-medium leading-tight">
-                  세계 <span className="font-bold">1위</span>
-                </div>
-              </div>
+          {/* 헤드라인 + 날짜 */}
+          <div className="mb-4 pt-4">
+            <div className="font-['Inter'] text-[24px] font-bold text-[#090a0a] tracking-wider mt-1">
+              뉴욕 허드슨강 헬기 추락... 탑승자 6명 전원 사망
             </div>
+            <div className="text-sm text-[#090a0a] mt-1">2025.04.11. 금요일 오전</div>
+          </div>
 
-            {/* 이미지 */}
+          {/* 이미지 - px-5 밖으로 뺌 */}
+          <div className="-mx-5 mt-4">
             <img
               src="https://placehold.co/375x194"
               alt="뉴스 이미지"
-              className="w-[375px] h-[194px] object-cover mb-4"
+              className="w-full h-48 object-cover"
             />
+          </div>
 
-            {/* 간단 요약 */}
-            <div className="absolute left-[34px] top-[347px] h-[72px] w-[2.28px] bg-[#e8ebed] rounded-full overflow-hidden rotate-90 origin-top-left">
-              <div className="w-[2.28px] h-[7.6px] bg-[#6a4dff] rounded-full" />
-              <div className="w-[2.28px] h-[76px] bg-[#6a4dff] rounded-full" />
-            </div>
+          {/* 간단 요약 */}
+          <div className="flex gap-3 px-4 mt-4">
+            {/* 세로 바 */}
+            <div className="w-[8px] bg-[#6a4dff] rounded-full" />
 
-            <div className="absolute left-[45.68px] top-[337px] text-[11px] font-bold text-black leading-tight">
-              간단 요약
+            {/* 텍스트 박스 */}
+            <div className="space-y-1">
+              <p className="text-xs font-bold">간단 요약</p>
+              <p className="text-xs text-black px-3">
+                탑승자들은 스페인에서 온 가족 관광객과 조종사 1명입니다. 사고 원인에 대한 조사가 진행 중이며, 유사 사고가 과거에도 발생했습니다.
+              </p>
             </div>
+          </div>
 
-            <div className="absolute left-[58.2px] top-[363px] w-[283px] text-xs font-normal leading-tight text-black">
-              탑승자들은 스페인에서 온 가족 관광객과 조종사 1명입니다. 사고 원인에 대한 조사가 진행 중이며, 유사 사고가 과거에도 발생했습니다.
-            </div>
+          {/* 요약 안내 박스 */}
+          <div className="flex items-center gap-4 px-10 py-4 bg-[#cacaca]/20 rounded-xl mt-5 mb-5">
+            <img src={SummaryInfoIcon} alt="요약 아이콘" className="w-6 h-6" />
+            <p className="text-xs text-black leading-snug">
+              동일한 주제의 뉴스 n개를 모아
+              <br />
+              객관적이고 중립적인 내용으로 요약합니다
+            </p>
+          </div>
 
-            {/* 요약 안내 박스 */}
-            <div className="absolute left-[22px] top-[443px] w-[330px] px-5 py-[13px] bg-[#cacaca]/20 rounded-[10px] flex items-center gap-[30px]">
-              <img
-                src={SummaryInfoIcon}
-                alt="요약 아이콘"
-                className="w-6 h-6"
-              />
-              <div className="text-black text-xs font-normal leading-snug">
-                동일한 주제의 뉴스 n개를 모아<br />
-                객관적이고 중립적인 내용으로 요약합니다
-              </div>
-            </div>
+          {/* 본문 */}
+          <div className="text-sm text-[#090a0a]">
+            미국 뉴욕의 허드슨강에 10일(현지시간) 헬기 1대가 추락해 탑승자 6명이 모두 숨졌다.
 
-            {/* 본문 */}
-            <div className="absolute left-[23px] top-[523px] w-[328px] text-[#090a0a] text-sm font-normal leading-normal">
-              2025년 4월 10일, 미국 뉴욕의 허드슨강 인근에서 관광용 헬기가 추락하는 사고가 발생했습니다. 이 사고로 탑승자 6명 전원이 사망하였으며, 이들은 스페인에서 온 가족 관광객과 조종사 1명으로 구성되어 있었습니다.
-            </div>
+ 
+
+AP통신 등에 따르면 이날 오후 3시17분쯤 헬기 추락 사고 신고가 접수됐으며 소방당국은 현장에서 구조작업을 벌였다. 사고 당시 헬기에는 조종사와 스페인 관광객 가족이 탑승해 있었다. 현지 경찰은 사고 현장에서 발견된 4명은 숨졌으며, 2명은 지역 병원으로 이송되었으나 사망했다고 전했다. 사고 원인에 대해서는 조사 중인 것으로 알려졌다. 해당 헬기는 약 16분간 비행한 후 강으로 추락한 것으로 CNN과 비행 추적 사이트 플라이트레이더 24는 분석했다. 
+
+ 
+
+뉴욕 상공에서는 여러 해 동안 수 많은 항공기 사고가 발생해왔다. 앞서 2009년에는 허드슨강 상공에서 비행기와 관광용 헬기가 충돌해 9명이 숨졌고, 2018년에는 이스트강에 전세 헬기 1대가 추락해 승객 5명이 사망했다.
           </div>
         </div>
 
         {/* 바텀 바 */}
         <nav className="h-14 bg-white flex justify-around items-center border-t shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
           <button onClick={toggleLike} className="focus:outline-none">
-            <img
-              src={liked ? LikeOnIcon : LikeOffIcon}
-              alt="좋아요"
-              className="h-6 w-6"
-            />
+            <img src={liked ? LikeOnIcon : LikeOffIcon} alt="좋아요" className="h-6 w-6" />
           </button>
-
           <button onClick={toggleClip} className="focus:outline-none">
-            <img
-              src={clipped ? ClipOnIcon : ClipOffIcon}
-              alt="스크랩"
-              className="h-6 w-6"
-            />
+            <img src={clipped ? ClipOnIcon : ClipOffIcon} alt="스크랩" className="h-6 w-6" />
           </button>
-
           <button onClick={toggleDislike} className="focus:outline-none">
-            <img
-              src={disliked ? DislikeOnIcon : DisLikeOffIcon}
-              alt="싫어요"
-              className="h-6 w-6"
-            />
+            <img src={disliked ? DislikeOnIcon : DisLikeOffIcon} alt="싫어요" className="h-6 w-6" />
           </button>
         </nav>
       </div>

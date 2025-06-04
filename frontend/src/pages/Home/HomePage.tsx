@@ -76,7 +76,7 @@ const HomePage = () => {
       {/* 이미지 설명 영역 */}
       <div className="w-[321px] h-[300px] relative">
         <img
-          className="absolute left-1/2 top-0 -translate-x-1/2 w-[240px] h-auto"
+          className="absolute left-1/2 top-0 -translate-x-1/2 w-[250px] h-auto"
           src={anchorImg}
           alt="대표 이미지"
         />
