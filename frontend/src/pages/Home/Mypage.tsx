@@ -12,13 +12,42 @@ export default function MyPage() {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState<'attendance' | 'scrap'>('attendance');
 
+  // 출석 날짜 상태를 관리 (yyyy-mm-dd 형식)
+  const [attendanceDates, setAttendanceDates] = useState<string[]>([
+    // 초기 예시 날짜
+    '2025-06-06',
+    '2025-06-02',
+    '2025-06-11'
+  ]);
+
+  // 팝업 노출 상태
+  const [showPopup, setShowPopup] = useState(false);
+
   const handleBack = () => {
     navigate(-1);
   };
 
+  // 오늘 날짜를 yyyy-mm-dd 형식으로 반환하는 함수
+  const getTodayString = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // 출석 도장 버튼 클릭 시 오늘 날짜가 없으면 추가, 있으면 팝업 띄움
+  const handleStampClick = () => {
+    const todayStr = getTodayString();
+    if (!attendanceDates.includes(todayStr)) {
+      setAttendanceDates((prev) => [...prev, todayStr]);
+      console.log('오늘 출석 도장 찍힘:', todayStr);
+    } else {
+      console.log('오늘 이미 출석 도장 찍음:', todayStr);
+      setShowPopup(true);
+    }
+  };
+
   return (
     <div className="w-full h-screen flex justify-center bg-gray-100">
-      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white">
+      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white relative">
         <Header title="마이페이지" onBack={handleBack} />
 
         <div className="w-[335px] h-[172px] relative mx-auto mt-4">
@@ -73,9 +102,7 @@ export default function MyPage() {
             <button
               type="button"
               className="w-[153px] px-4 py-2.5 bg-white rounded-lg shadow outline outline-1 outline-[#cfd4dc] flex items-center gap-2"
-              onClick={() => {
-                console.log('출석 도장 버튼 클릭됨');
-              }}
+              onClick={handleStampClick}
             >
               <img className="w-[19px] h-[18px]" src={stampIcon} alt="출석 도장 아이콘" />
               <span className="text-sm text-[#344053] font-medium">출석도장 찍기</span>
@@ -100,9 +127,29 @@ export default function MyPage() {
 
         {/* 선택된 탭에 따른 컨텐츠 */}
         <div className="px-4 mt-0 flex-grow overflow-auto">
-          {selectedTab === 'attendance' && <AttendanceCalendar />}
+          {selectedTab === 'attendance' && (
+            <AttendanceCalendar attendanceDates={attendanceDates} />
+          )}
           {selectedTab === 'scrap' && <ScrapNews />}
         </div>
+
+        {/* 귀여운 팝업 */}
+{showPopup && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+    <div className="bg-white rounded-xl p-7 w-80 text-center shadow-lg font-medium" style={{ fontFamily: 'Pretendard, sans-serif' }}>
+      <div className="mb-4 text-lg text-black">오늘은 이미 출석 도장을 찍었어요! 🐾</div>
+      <button
+        onClick={() => setShowPopup(false)}
+        className="mt-2 px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+        style={{ backgroundColor: '#7F56D9', color: 'white' }}
+      >
+        닫기
+      </button>
+    </div>
+  </div>
+)}
+
+
       </div>
     </div>
   );
