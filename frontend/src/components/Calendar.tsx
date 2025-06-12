@@ -26,6 +26,7 @@ const NavButtons = styled.div`
     cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
+    color: rgba(60, 60, 67, 0.8);
 
     &:hover {
       background-color: #ddd;
@@ -44,7 +45,7 @@ const CalendarWrapper = styled.div`
   max-width: 360px;
   margin: 0 auto;
   font-family: 'Pretendard', sans-serif;
-  background-color:rgb(248, 248, 248);
+  background-color: rgb(248, 248, 248);
   padding: 16px;
   border-radius: 8px;
 `;
@@ -86,24 +87,25 @@ const DateCell = styled.div<{ $dimmed?: boolean }>`
   }
 `;
 
+interface CalendarProps {
+  renderDateCell?: (date: Date, isCurrentMonth: boolean) => React.ReactNode;
+  onDateClick?: (date: Date) => void;
+}
 
-const Calendar = () => {
+const Calendar: React.FC<CalendarProps> = ({ renderDateCell, onDateClick }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // 이번 달 첫 날
   const firstDayOfMonth = new Date(year, month, 1);
   const startDay = new Date(firstDayOfMonth);
   startDay.setDate(1 - firstDayOfMonth.getDay());
 
-  // 이번 달 마지막 날
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const endDay = new Date(lastDayOfMonth);
   endDay.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
 
-  // 주 단위 날짜 배열 생성
   const groupDatesByWeek = (start: Date, end: Date) => {
     const weeks: Date[][] = [];
     let currentWeek: Date[] = [];
@@ -141,8 +143,8 @@ const Calendar = () => {
           {year}년 {month + 1}월
         </DateDisplay>
         <NavButtons>
-          <button onClick={handlePrevMonth}>←</button>
-          <button onClick={handleNextMonth}>→</button>
+          <button onClick={handlePrevMonth}>❮</button>
+          <button onClick={handleNextMonth}>❯</button>
         </NavButtons>
       </CalendarHeader>
 
@@ -155,11 +157,16 @@ const Calendar = () => {
       <DatesGrid>
         {weeks.map((week, i) => (
           <WeekRow key={i}>
-            {week.map((date, j) => (
-              <DateCell key={j} $dimmed={!isSameMonth(date)}>
-                <span>{date.getDate()}</span>
-              </DateCell>
-            ))}
+            {week.map((date, j) => {
+              const currentMonth = isSameMonth(date);
+              return (
+                <DateCell key={j} $dimmed={!currentMonth} onClick={() => onDateClick?.(date)}>
+                  {renderDateCell
+                    ? renderDateCell(date, currentMonth)
+                    : <span>{date.getDate()}</span>}
+                </DateCell>
+              );
+            })}
           </WeekRow>
         ))}
       </DatesGrid>

@@ -5,6 +5,7 @@ import Splash from './pages/Splash';
 import Join from './pages/Login/Join';
 import Login from './pages/Login/Login';
 import Calendar from './components/Calendar';
+import AttendanceCalendar from './components/AttendanceCalendar';
 
 
 import HomePage from './pages/Home';
@@ -32,6 +33,7 @@ function App() {
       <Route path="/news/detail" element={<NewsDetailPage />} />
       <Route path="/home/mypage" element={<MyPage />} />
       <Route path="/calendar" element={<Calendar />} />
+      <Route path="/calendar" element={<AttendanceCalendar />} />
 
       {/* Settings 관련 페이지들 */}
       <Route path="/settings" element={<SettingsPage />} />
