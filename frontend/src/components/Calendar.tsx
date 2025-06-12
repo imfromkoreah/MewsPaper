@@ -45,9 +45,9 @@ const CalendarWrapper = styled.div`
   max-width: 360px;
   margin: 0 auto;
   font-family: 'Pretendard', sans-serif;
-  background-color: rgb(248, 248, 248);
+  background-color: rgb(252, 252, 252);
   padding: 16px;
-  border-radius: 8px;
+  border-radius: 0 0 10px 10px; /* 좌우하단만 */
 `;
 
 const WeekDays = styled.div`
