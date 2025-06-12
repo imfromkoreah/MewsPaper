@@ -6,7 +6,7 @@ import Join from './pages/Login/Join';
 import Login from './pages/Login/Login';
 import Calendar from './components/Calendar';
 import AttendanceCalendar from './components/AttendanceCalendar';
-
+import ScrapNews from './components/ScrapNews';
 
 import HomePage from './pages/Home';
 import NewsPage from './pages/Home/NewsPage';
@@ -33,7 +33,8 @@ function App() {
       <Route path="/news/detail" element={<NewsDetailPage />} />
       <Route path="/home/mypage" element={<MyPage />} />
       <Route path="/calendar" element={<Calendar />} />
-      <Route path="/calendar" element={<AttendanceCalendar />} />
+      <Route path="/attendanceCalendar" element={<AttendanceCalendar />} />
+      <Route path="/scrap-news" element={<ScrapNews />} />
 
       {/* Settings 관련 페이지들 */}
       <Route path="/settings" element={<SettingsPage />} />
