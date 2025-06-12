@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import anchorImg from '../../assets/character/anchor.png';
 import JellyOff from '../../assets/svg/jelly_off.svg';
 import Message from '../../assets/svg/message.svg';
@@ -5,6 +6,8 @@ import PurpleDot from '../../assets/svg/check_p.svg';
 import Week from '../../assets/svg/week.svg';
 
 const HomePage = () => {
+  const navigate = useNavigate();
+
   const attendanceIcons = new Array(7).fill(JellyOff);
 
   const today = new Date();
@@ -25,7 +28,7 @@ const HomePage = () => {
           type="button"
           className="left-[109px] top-[32px] absolute flex items-center space-x-1 text-[#090a0a] text-sm font-normal font-['Inter'] leading-none cursor-pointer
                     focus:outline-none active:scale-95 transition-transform duration-150"
-          onClick={() => console.log('날짜 또는 아이콘 클릭됨')}
+          onClick={() => navigate('/home/mypage')}
         >
           <span>{formattedDate}</span>
           <img src={Week} alt="요일 옆 버튼" className="w-[10px] h-[10px]" />

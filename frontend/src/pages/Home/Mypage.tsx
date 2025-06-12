@@ -1,13 +1,13 @@
 import Header from '../../components/Header';
 import { useNavigate } from 'react-router-dom';
-import Calendar from '../../components/Calendar';
+import AttendanceCalendar from '../../components/AttendanceCalendar';
 
 
 // 이미지 import 예시 (이미지 파일을 public 또는 assets/images 같은 폴더에 위치시켜야 함)
 import profileImg from '../../assets/character/mewsdoc.png'; // 프로필 이미지
 import stampIcon from '../../assets/svg/jelly_on.svg';    // 도장 아이콘
 
-export default function Mypage() {
+export default function MyPage() {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -69,8 +69,8 @@ export default function Mypage() {
           </div>
         </div>
 {/* 달력 컴포넌트 추가 */}
-        <div className="mt-6 px-4">
-          <Calendar />
+        <div className="mt-24 px-4">
+          <AttendanceCalendar />
         </div>
         
       </div>
