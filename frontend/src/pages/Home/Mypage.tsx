@@ -5,35 +5,28 @@ import AttendanceCalendar from '../../components/AttendanceCalendar';
 import CategoryTabs from '../../components/CategoryTabs';
 import ScrapNews from '../../components/ScrapNews';
 
-import profileImg from '../../assets/character/mewsdoc.png'; // 프로필 이미지
-import stampIcon from '../../assets/svg/jelly_on.svg';        // 도장 아이콘
+import profileImg from '../../assets/character/mewsdoc.png';
+import stampIcon from '../../assets/svg/jelly_on.svg';
 
 export default function MyPage() {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState<'attendance' | 'scrap'>('attendance');
-
-  // 출석 날짜 상태를 관리 (yyyy-mm-dd 형식)
   const [attendanceDates, setAttendanceDates] = useState<string[]>([
-    // 초기 예시 날짜
     '2025-06-06',
     '2025-06-02',
-    '2025-06-11'
+    '2025-06-11',
   ]);
-
-  // 팝업 노출 상태
   const [showPopup, setShowPopup] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  // 오늘 날짜를 yyyy-mm-dd 형식으로 반환하는 함수
   const getTodayString = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
 
-  // 출석 도장 버튼 클릭 시 오늘 날짜가 없으면 추가, 있으면 팝업 띄움
   const handleStampClick = () => {
     const todayStr = getTodayString();
     if (!attendanceDates.includes(todayStr)) {
@@ -65,9 +58,8 @@ export default function MyPage() {
             </div>
           </div>
 
-          {/* 프로필 정보 컨테이너에 relative 추가 */}
+          {/* 프로필 정보 */}
           <div className="absolute top-0 left-[11px] w-[313px] h-[60px] relative">
-            {/* 텍스트 영역 - 왼쪽 정렬, 최대 너비 고정 */}
             <div className="flex flex-col items-start gap-1 max-w-[201px]">
               <div
                 className="w-full text-base font-bold text-[#191d23]"
@@ -75,10 +67,7 @@ export default function MyPage() {
               >
                 닉네임
               </div>
-              <div
-                className="inline-block px-2.5 py-0.5 bg-emerald-50 rounded max-w-full"
-                style={{ fontFamily: 'Pretendard, sans-serif' }}
-              >
+              <div className="inline-block px-2.5 py-0.5 bg-emerald-50 rounded max-w-full" style={{ fontFamily: 'Pretendard, sans-serif' }}>
                 <div
                   className="text-sm text-[#090a0a] max-w-full truncate"
                   style={{ minWidth: '40px' }}
@@ -89,15 +78,10 @@ export default function MyPage() {
               </div>
             </div>
 
-            {/* 프로필 이미지 - 절대 위치 고정 */}
-            <img
-              className="w-[60px] h-[60px] absolute top-0 right-0"
-              src={profileImg}
-              alt="프로필"
-            />
+            <img className="w-[60px] h-[60px] absolute top-0 right-0" src={profileImg} alt="프로필" />
           </div>
 
-          {/* 출석 도장, 프로필 변경 버튼 */}
+          {/* 버튼 영역 */}
           <div className="absolute top-[75px] left-[14px] inline-flex items-center gap-[17px]">
             <button
               type="button"
@@ -125,31 +109,30 @@ export default function MyPage() {
           <CategoryTabs selected={selectedTab} onSelect={(tab) => setSelectedTab(tab)} />
         </div>
 
-        {/* 선택된 탭에 따른 컨텐츠 */}
+        {/* 컨텐츠 */}
         <div className="px-4 mt-0 flex-grow overflow-auto">
-          {selectedTab === 'attendance' && (
-            <AttendanceCalendar attendanceDates={attendanceDates} />
-          )}
+          {selectedTab === 'attendance' && <AttendanceCalendar attendanceDates={attendanceDates} />}
           {selectedTab === 'scrap' && <ScrapNews />}
         </div>
 
-        {/* 귀여운 팝업 */}
-{showPopup && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-    <div className="bg-white rounded-xl p-7 w-80 text-center shadow-lg font-medium" style={{ fontFamily: 'Pretendard, sans-serif' }}>
-      <div className="mb-4 text-lg text-black">오늘은 이미 출석 도장을 찍었어요! 🐾</div>
-      <button
-        onClick={() => setShowPopup(false)}
-        className="mt-2 px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
-        style={{ backgroundColor: '#7F56D9', color: 'white' }}
-      >
-        닫기
-      </button>
-    </div>
-  </div>
-)}
-
-
+        {/* 팝업 */}
+        {showPopup && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+            <div
+              className="bg-white rounded-xl p-7 w-80 text-center shadow-lg font-medium"
+              style={{ fontFamily: 'Pretendard, sans-serif' }}
+            >
+              <div className="mb-4 text-lg text-black">오늘은 이미 출석 도장을 찍었어요! 🐾</div>
+              <button
+                onClick={() => setShowPopup(false)}
+                className="mt-2 px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                style={{ backgroundColor: '#7F56D9', color: 'white' }}
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

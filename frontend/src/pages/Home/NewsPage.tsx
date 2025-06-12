@@ -31,10 +31,10 @@ export default function News() {
   const [activeTab, setActiveTab] = useState('politics');
   const [barStyle, setBarStyle] = useState({ left: 0, width: 0 });
   const [articles, setArticles] = useState<Article[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [flipKey, setFlipKey] = useState(0); // 🔑 FlipBook 강제 재마운트용
   const tabsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const flipBookRef = useRef<any>(null);
 
-  // 탭 위치 계산
   useEffect(() => {
     const index = tabs.findIndex(tab => tab.id === activeTab);
     const tabEl = tabsRef.current[index];
@@ -45,7 +45,6 @@ export default function News() {
     }
   }, [activeTab]);
 
-  // 뉴스 가져오기
   useEffect(() => {
     const selected = tabs.find(tab => tab.id === activeTab);
     if (!selected) return;
@@ -53,9 +52,8 @@ export default function News() {
     axios
       .get(`/api/news?categoryId=${selected.categoryId}`)
       .then(res => {
-        console.log('받은 데이터:', res.data);
         setArticles(res.data || []);
-        setCurrentIndex(0);
+        setFlipKey(prev => prev + 1); // 🔑 FlipBook을 다시 렌더링하게 만듦
       })
       .catch(err => {
         console.error('뉴스 로딩 실패:', err);
@@ -63,19 +61,9 @@ export default function News() {
       });
   }, [activeTab]);
 
-  const currentArticle = articles[currentIndex];
-
-  const handlePrev = () => {
-    setCurrentIndex(prev => (prev > 0 ? prev - 1 : articles.length - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex(prev => (prev < articles.length - 1 ? prev + 1 : 0));
-  };
-
   return (
     <main className="w-full flex flex-col items-center relative">
-      {/* 상단 영역 */}
+      {/* 상단 탭 */}
       <div className="w-full h-[93px] relative mx-auto">
         <div className="absolute left-1/2 top-0 -translate-x-1/2 text-black text-[20px] font-bold font-['Pretendard'] leading-tight">
           Top 10 뉴스
@@ -90,12 +78,8 @@ export default function News() {
           {tabs.map((tab, i) => (
             <div
               key={tab.id}
-              ref={el => {
-                tabsRef.current[i] = el;
-              }}
-              className={`text-center cursor-pointer ${
-                activeTab === tab.id ? 'text-[#6a4dff]' : ''
-              }`}
+              ref={el => { tabsRef.current[i] = el; }}
+              className={`cursor-pointer ${activeTab === tab.id ? 'text-[#6a4dff]' : ''}`}
               style={{ width: tab.width ? `${tab.width}px` : '35px', fontSize: '15px' }}
               onClick={() => setActiveTab(tab.id)}
             >
@@ -114,26 +98,23 @@ export default function News() {
         </div>
       </div>
 
+      {/* 본문 영역 */}
       <div className="relative mt-[60px] w-[480px] h-[500px]">
-        {/* 신문 배경 */}
         <img
           src={Paper}
           alt="신문 배경"
           className="w-full h-full absolute top-0 left-0 z-0 object-cover"
         />
-
-        {/* 그라데이션 효과 주려고
-        세로선 걍 맞춰서 넣음 ㅋㅋㅋ
-        (FlipBook 앞에 보이도록 z-30 설정) */}
         <div className="absolute top-[0px] left-[53px] w-[8px] h-[493px] bg-[#D4D4D4]/70 z-30" />
 
-        {/* Flipbook */}
         {articles.length === 0 ? (
           <div className="flex justify-center items-center w-full h-full text-gray-500 font-semibold z-20 relative">
             해당 카테고리의 뉴스가 없습니다.
           </div>
         ) : (
           <HTMLFlipBook
+            key={flipKey} // 🔑 key 변경으로 완전 새로 렌더링
+            ref={flipBookRef}
             width={370}
             height={490}
             className="relative z-20 overflow-hidden"
@@ -153,54 +134,38 @@ export default function News() {
                 className="flex flex-col items-center justify-start bg-[#E4E4E4] shadow-md h-full p-5 box-border"
                 style={{
                   maxWidth: '430px',
-                  maxHeight: '490px', // FlipBook 높이와 맞춤
+                  maxHeight: '490px',
                   backgroundColor: 'transparent',
                 }}
               >
-                {/* 랭킹 태그를 절대 위치 대신 플렉스 박스 상단에 넣기 */}
                 <div className="w-full flex justify-start mb-3">
                   <div className="px-3 py-1 bg-[#6B4EFF]/70 rounded-2xl inline-block">
                     <div className="text-[#ffffff] text-sm font-medium">
-                      정치 <span className="font-bold">{index + 1}위</span>
+                      {tabs.find(t => t.id === activeTab)?.label}{' '}
+                      <span className="font-bold">{index + 1}위</span>
                     </div>
                   </div>
                 </div>
-
                 <h3 className="font-bold text-lg mb-2 w-full max-w-[350px] text-left line-clamp-2">
                   {article.title}
                 </h3>
                 <p className="mb-2 text-sm text-black-600">
-                  날짜 데이터 가져오기{article.createdAt}
+                  {article.createdAt}
                 </p>
                 <div className="w-full max-w-[350px] border-b border-gray-400 mb-4" />
-
                 <img
                   src={article.thumbnailUrl}
                   alt="썸네일"
                   className="max-w-[250px] max-h-[150px] mb-3 rounded shadow"
                 />
-                <p className="text-sm line-clamp-5 text-center overflow-hidden">{article.content}</p>
+                <p className="text-sm line-clamp-5 text-center overflow-hidden">
+                  {article.content}
+                </p>
               </div>
             ))}
           </HTMLFlipBook>
         )}
       </div>
-
-      {/* 좌우 버튼 (필요시 사용 가능) */}
-      {/* 
-      <button
-        className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 px-2 py-1 rounded-r text-black"
-        onClick={handlePrev}
-      >
-        ◀
-      </button>
-      <button
-        className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 px-2 py-1 rounded-l text-black"
-        onClick={handleNext}
-      >
-        ▶
-      </button>
-      */}
     </main>
   );
 }
