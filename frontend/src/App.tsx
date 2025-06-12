@@ -4,11 +4,14 @@ import Layout from './components/Layout';
 import Splash from './pages/Splash';
 import Join from './pages/Login/Join';
 import Login from './pages/Login/Login';
+import Calendar from './components/Calendar';
+
 
 import HomePage from './pages/Home';
 import NewsPage from './pages/Home/NewsPage';
 import NewsDetailPage from './pages/Home/NewsDetailPage';
 import ChatPage from './pages/Home/ChatPage';
+import MyPage from './pages/Home/MyPage';
 import NotificationPage from './pages/Home/NotificationPage';
 
 
@@ -27,6 +30,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/noti" element={<NotificationPage />} />
       <Route path="/news/detail" element={<NewsDetailPage />} />
+      <Route path="/home/mypage" element={<MyPage />} />
+      <Route path="/calendar" element={<Calendar />} />
 
       {/* Settings 관련 페이지들 */}
       <Route path="/settings" element={<SettingsPage />} />
