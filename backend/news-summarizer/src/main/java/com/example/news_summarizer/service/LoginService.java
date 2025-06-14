@@ -67,12 +67,11 @@ public class LoginService {
         
         Optional<User> existingUser = loginRepository.findBySocialIdAndSocialProvider(email, SocialProvider.KAKAO);
 
-        User user = null;
+        User user;
         if (existingUser.isPresent()) {
-            user = User.builder()
-                    .name(name)
-                    .updatedAt(LocalDateTime.now()) // 업데이트 시간 기록
-                    .build();
+            user = existingUser.get();
+            user.setName(name);
+            user.setUpdatedAt(LocalDateTime.now());
             loginRepository.save(user);
             System.out.println("기존 카카오 사용자 로그인인: " + user.getNickname());
         } else {
