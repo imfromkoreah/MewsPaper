@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import AttendanceCalendar from '../../components/AttendanceCalendar';
@@ -17,10 +18,29 @@ export default function MyPage() {
     '2025-06-11',
   ]);
   const [showPopup, setShowPopup] = useState(false);
+  const [userInfo, setUserInfo] = useState({ id: '', nickname: '', email: '' });
 
   const handleBack = () => {
     navigate(-1);
   };
+
+  useEffect(() => {
+  const token = localStorage.getItem('userToken');
+  if (!token) {
+    console.error('토큰이 없습니다. 로그인 상태를 확인하세요.');
+    return;
+  }
+  axios.get('http://localhost:8080/api/user/me', {
+    headers: {
+      Authorization: `Bearer ${token}`,  // 이 부분 추가!
+    },
+    withCredentials: true,  // 세션/쿠키가 필요하다면 유지
+  })
+  .then((res) => { setUserInfo(res.data);
+  })
+  .catch((err) => { console.error('사용자 정보 불러오기 실패:', err);
+  });
+}, []);
 
   const getTodayString = () => {
     const today = new Date();
@@ -50,7 +70,7 @@ export default function MyPage() {
             style={{ fontFamily: 'Pretendard, sans-serif' }}
           >
             <div className="text-center text-sm text-[#090a0a] leading-tight">
-              <span className="font-bold">닉네임</span>
+              <span className="font-bold">{userInfo.nickname}</span>
               <span className="font-normal"> 레벨업까지 </span>
               <span className="font-bold">5개의 발바닥</span>
               <span className="font-normal">이 남았어요! </span>
@@ -65,16 +85,16 @@ export default function MyPage() {
                 className="w-full text-base font-bold text-[#191d23]"
                 style={{ fontFamily: 'Pretendard, sans-serif' }}
               >
-                닉네임
+                {userInfo.nickname}
               </div>
               <div className="inline-block px-2.5 py-0.5 bg-emerald-50 rounded max-w-full" style={{ fontFamily: 'Pretendard, sans-serif' }}>
                 <div
-                  className="text-sm text-[#090a0a] max-w-full truncate"
-                  style={{ minWidth: '40px' }}
-                  title="@user_name_longer_example"
-                >
-                  @user_name_maxxxxxxxxxm
-                </div>
+                    className="text-sm text-[#090a0a] max-w-full truncate"
+                    style={{ minWidth: '40px' }}
+                    title={userInfo.email}
+                  >
+                    @{userInfo.email}
+                  </div>
               </div>
             </div>
 
