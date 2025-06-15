@@ -135,20 +135,20 @@ const useKakaoLogin = (kakaoAppKey: string) => {
           const responseData: BackendLoginResponse = await backendResponse.json();
           console.log('🎉 백엔드 로그인 성공 (서버로부터 응답):', responseData);
           
+          // 토큰과 userId를 Local Storage에 저장하는 로직을 통합
           if (responseData.token) {
-          localStorage.setItem('userToken', responseData.token);  // ← 여기에 토큰 저장 추가
+            console.log('저장할 토큰:', responseData.token);
+            localStorage.setItem('userToken', responseData.token);
+            console.log('토큰 저장 완료');
+          }
+          
+          if (responseData.user?.id) {
+            localStorage.setItem('userId', responseData.user.id);
+            console.log('userId 저장 완료:', responseData.user.id);
+            // userData 상태 업데이트 (새로 추가된 로직)
+            setUserData(responseData.user); 
           }
 
-          if (responseData.token) {
-          console.log('저장할 토큰:', responseData.token);
-          localStorage.setItem('userToken', responseData.token);
-          console.log('토큰 저장 완료');
-        }
-
-        if (responseData.user?.id) {
-        localStorage.setItem('userId', responseData.user.id);
-        console.log('userId 저장 완료:', responseData.user.id);
-        }
           setIsLoggedIn(true);
 
           // 백엔드에서 받은 redirectUrl로 이동하는 로직 추가
@@ -184,6 +184,7 @@ const useKakaoLogin = (kakaoAppKey: string) => {
       window.Kakao.Auth.logout(() => {
         console.log('카카오 로그아웃 완료');
         localStorage.removeItem('userToken');
+        localStorage.removeItem('userId'); // userId도 로그아웃 시 제거
         setIsLoggedIn(false);
         setUserData(null);
         setError(null);
