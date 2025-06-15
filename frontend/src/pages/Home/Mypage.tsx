@@ -10,6 +10,7 @@ import profileImg1 from '../../assets/character/mewsdoc.png';
 import profileImg2 from '../../assets/character/mewsdoc2.png';
 import profileImg3 from '../../assets/character/mewsdoc3.png';
 import profileImg4 from '../../assets/character/mewsdoc4.png';
+import profileImg5 from '../../assets/character/mewsdoc5.png';
 
 import stampIcon from '../../assets/svg/jelly_on.svg';
 
@@ -31,7 +32,7 @@ export default function MyPage() {
   const [showNicknameEditPopup, setShowNicknameEditPopup] = useState(false);
   const [newNickname, setNewNickname] = useState('');
 
-  const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4];
+  const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5];
   const [selectedProfileIndex, setSelectedProfileIndex] = useState<number>(() => {
     const savedIndex = localStorage.getItem('profileIndex');
     return savedIndex !== null ? parseInt(savedIndex) : 0;
@@ -239,7 +240,7 @@ export default function MyPage() {
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
     <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg font-medium">
       <h3 className="text-lg font-semibold mb-4">프로필을 선택하세요</h3>
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-3 gap-4 mb-4">
         {profileImages.map((img, index) => (
           <div
             key={index}

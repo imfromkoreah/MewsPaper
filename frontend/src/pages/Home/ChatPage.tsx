@@ -4,6 +4,7 @@ import profileImg1 from '../../assets/character/mewsdoc.png';
 import profileImg2 from '../../assets/character/mewsdoc2.png';
 import profileImg3 from '../../assets/character/mewsdoc3.png';
 import profileImg4 from '../../assets/character/mewsdoc4.png';
+import profileImg5 from '../../assets/character/mewsdoc5.png';
 
 interface Message {
   id: number;
@@ -19,7 +20,7 @@ const messages: Message[] = [
   { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
 ];
 
-const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4];
+const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5];
 
 function ChatProfile() {
   const savedIndex = localStorage.getItem('profileIndex');
