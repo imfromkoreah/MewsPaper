@@ -144,6 +144,11 @@ const useKakaoLogin = (kakaoAppKey: string) => {
           localStorage.setItem('userToken', responseData.token);
           console.log('토큰 저장 완료');
         }
+
+        if (responseData.user?.id) {
+        localStorage.setItem('userId', responseData.user.id);
+        console.log('userId 저장 완료:', responseData.user.id);
+        }
           setIsLoggedIn(true);
 
           // 백엔드에서 받은 redirectUrl로 이동하는 로직 추가
