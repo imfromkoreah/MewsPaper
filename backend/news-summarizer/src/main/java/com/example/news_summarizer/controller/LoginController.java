@@ -218,4 +218,90 @@ public class LoginController {
         }
     }
 
+    // --- 직접 로그인 엔드포인트 ---
+    @PostMapping("/email")
+    public ResponseEntity<LoginResponse> emailRegister(@RequestBody EmailLoginRequest requestBody) {
+       
+        if (requestBody == null) {
+            return ResponseEntity.badRequest().body(new LoginResponse(false, "이메일/비밀번호는 필수입니다.", null, null));
+        }
+
+        try {
+            User user = loginService.authenticateEmailUser(requestBody, "reg");
+
+            String redirectUrl;
+            boolean hasNickname = user.getNickname() != null && !user.getNickname().trim().isEmpty();
+
+            if (hasNickname) {
+                redirectUrl = "http://localhost:5173/home";
+            } else {
+                redirectUrl = "http://localhost:5173/onboarding";
+            }
+
+            LoginResponse.UserData userData = new LoginResponse.UserData(
+                user.getId(),
+                user.getName(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getSocialProvider() != null ? user.getSocialProvider().name() : null,
+                user.getSocialId()
+            );
+
+            return ResponseEntity.ok(new LoginResponse(
+                true,
+                "로그인 성공",
+                userData,
+                redirectUrl
+            ));
+
+        } catch (Exception e) {
+            System.err.println("이메일 로그인 로그인 백엔드 처리 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null));
+        }
+    }
+    // --- 직접 로그인 엔드포인트 ---
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> emailLogin(@RequestBody EmailLoginRequest requestBody) {
+       
+        if (requestBody == null) {
+            return ResponseEntity.badRequest().body(new LoginResponse(false, "이메일/비밀번호는 필수입니다.", null, null));
+        }
+
+        try {
+            User user = loginService.authenticateEmailUser(requestBody, "login");
+
+            String redirectUrl;
+            boolean hasNickname = user.getNickname() != null && !user.getNickname().trim().isEmpty();
+
+            if (hasNickname) {
+                redirectUrl = "http://localhost:5173/home";
+            } else {
+                redirectUrl = "http://localhost:5173/onboarding";
+            }
+
+            LoginResponse.UserData userData = new LoginResponse.UserData(
+                user.getId(),
+                user.getName(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getSocialProvider() != null ? user.getSocialProvider().name() : null,
+                user.getSocialId()
+            );
+
+            return ResponseEntity.ok(new LoginResponse(
+                true,
+                "로그인 성공",
+                userData,
+                redirectUrl
+            ));
+
+        } catch (Exception e) {
+            System.err.println("이메일 로그인 로그인 백엔드 처리 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null));
+        }
+    }
+    
+
 }

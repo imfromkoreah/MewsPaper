@@ -14,12 +14,17 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder; // PasswordEncoder import 필요
+
+
 import java.time.LocalDateTime; // 사용자 생성/업데이트 시간 기록용
 import java.util.Optional;
 
 @Service
 public class LoginService {
     private final LoginRepository loginRepository;
+    private final PasswordEncoder passwordEncoder; // PasswordEncoder 주입
     private final WebClient webClient;
 
     // 카카오 관련 환경 변수 (WebClient에 baseUrl로 설정했으므로, 여기서는 불필요)
@@ -50,8 +55,9 @@ public class LoginService {
     @Value("${google.user-info-uri}")
     private String googleUserInfoUri;
 
-    public LoginService(LoginRepository loginRepository, WebClient.Builder webClientBuilder) {
+    public LoginService(LoginRepository loginRepository, WebClient.Builder webClientBuilder, PasswordEncoder passwordEncoder) {
         this.loginRepository = loginRepository;
+        this.passwordEncoder = passwordEncoder;
         // WebClient.Builder를 사용하여 기본 설정을 구성 (카카오 전용 WebClient)
         // 네이버는 별도로 URI를 구성할 것이므로, 이 WebClient는 카카오 전용으로 사용합니다.
         this.webClient = webClientBuilder
@@ -242,6 +248,47 @@ public class LoginService {
                     .build();
             loginRepository.save(user); // 새로운 사용자 정보 저장
             System.out.println("새로운 Google 사용자 회원가입: " + user.getNickname()); // 닉네임이 없으면 null 출력 가능
+        }
+        return user;
+    }
+
+    // 이메일 사용자 인증/회원가입 처리 메서드
+    public User authenticateEmailUser(EmailLoginRequest userJsonNode, String pString) {
+        String email = userJsonNode.getEmail();
+        String password = userJsonNode.getPassword();
+        
+        Optional<User> existingUser = loginRepository.findBySocialIdAndSocialProvider(email, SocialProvider.DIRECT);
+
+        User user;
+        if (existingUser.isPresent()) {
+            user = existingUser.get();
+            if (pString == "reg" )
+                throw new BadCredentialsException("이미 존재하는 사용자 입니다.");
+            else if(pString == "login"){
+                if (passwordEncoder.matches(password, user.getPassword())) {
+                    // 비밀번호 일치: 로그인 성공
+                    System.out.println("로컬 사용자 로그인 성공: " + user.getEmail());
+                    return user; // 인증된 사용자 객체 반환
+                } else {
+                    // 비밀번호 불일치
+                    System.out.println("로그인 실패: 비밀번호 불일치 (이메일: " + email + ")");
+                    throw new BadCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다.");
+                }
+            }
+        } else {
+            // 신규 사용자: DB에 저장
+            String encodedPassword = passwordEncoder.encode(password);
+
+            user = User.builder()
+                    .socialId(email) // Google의 'sub'를 socialId로 사용
+                    .socialProvider(SocialProvider.DIRECT)
+                    .email(email)
+                    .password(encodedPassword)
+                    .createdAt(LocalDateTime.now()) // 생성 시간 기록
+                    .updatedAt(LocalDateTime.now()) // 업데이트 시간 기록
+                    .build();
+            loginRepository.save(user); // 새로운 사용자 정보 저장
+            System.out.println("새로운 이메일 사용자 회원가입: " + user.getNickname()); // 닉네임이 없으면 null 출력 가능
         }
         return user;
     }
