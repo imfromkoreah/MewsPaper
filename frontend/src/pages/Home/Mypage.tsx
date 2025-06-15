@@ -29,31 +29,21 @@ export default function MyPage() {
   };
 
   useEffect(() => {
-  const token = localStorage.getItem('userToken');
-  if (!token) {
-    console.error('토큰이 없습니다. 로그인 상태를 확인하세요.');
-    return;
-  }
-    axios.get('http://localhost:8080/api/user/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,  // 이 부분 추가!
-      },
-      withCredentials: true,  // 세션/쿠키가 필요하다면 유지
-    })
-    .then((res) => { setUserInfo(res.data);
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.error('로그인 정보가 존재하지 않습니다..');
+      return;
+    }
+    axios.get(`http://localhost:8080/api/user/${userId}`)
+    .then((res) => { 
+      setUserInfo(res.data);
     })
     .catch((err) => { console.error('사용자 정보 불러오기 실패:', err);
     });  
     // 2. 출석 기록 불러오기
     // ⭐ userId를 사용하여 백엔드 API 호출
     
-    const userId = localStorage.getItem('userId');
-    axios.get(`http://localhost:8080/api/user/attendance/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // 인증 토큰 포함
-      },
-      withCredentials: true,
-    })
+    axios.get(`http://localhost:8080/api/user/attendance/${userId}`)
     .then((res: { data: UserAttendanceResponse<string[]> }) => { // 응답 데이터 타입을 ApiResponse<string[]>로 지정
       if (res.data.success && res.data.data) {
         setAttendanceDates(res.data.data); // 출석 날짜 배열로 상태 업데이트

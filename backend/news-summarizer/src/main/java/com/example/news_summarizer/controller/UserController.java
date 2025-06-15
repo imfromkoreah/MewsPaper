@@ -60,9 +60,9 @@ public class UserController {
     }
 
     // ID로 사용자 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getUserInfo(@PathVariable Long id) {
-        User user = userService.findById(id);
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUserInfo(@PathVariable("userId") Long userId) {
+        User user = userService.findById(userId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
         }
