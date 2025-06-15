@@ -22,6 +22,7 @@ import NotificationSettingsPage from './pages/Settings/NotificationSettingsPage'
 import NewsAlertTimePage from './pages/Settings/NewsAlertTimePage';
 
 import NaverCallback from './pages/Auth/NaverCallback'; // <-- 이 줄이 중요합니다!
+import GoogleCallback from './pages/Auth/GoogleCallback'; // <-- 이 줄이 중요합니다!
 
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
 
       {/* ⭐⭐ 이 라우트가 반드시 있어야 합니다 ⭐⭐ */}
       <Route path="/auth/naver/callback" element={<NaverCallback />} />
+      <Route path="/google/callback" element={<GoogleCallback />} />
 
       {/* Layout이 적용되는 라우트 그룹 */}
       <Route
