@@ -3,17 +3,14 @@ package com.example.news_summarizer.controller;
 // 필요한 모든 임포트 문 (기존 임포트 유지)
 import com.example.news_summarizer.service.LoginService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.example.news_summarizer.dto.AccessTokenRequest;
-import com.example.news_summarizer.dto.LoginRequest; // 카카오 API 응답 DTO
-import com.example.news_summarizer.dto.LoginResponse;
-import com.example.news_summarizer.dto.LoginResponse.UserData;
-import com.example.news_summarizer.dto.NaverLoginRequest;
+import com.example.news_summarizer.dto.*; // 카카오 API 응답 DTO
 import com.example.news_summarizer.entity.User;
 import com.example.news_summarizer.security.JwtTokenProvider;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -89,7 +86,8 @@ public class LoginController {
         String code = requestBody.getCode();
         String state = requestBody.getState();
 
-        if (code == null || code == null || state == null || state.isEmpty()) { // 첫 번째 code == null은 오타인듯
+        // 수정된 부분: code == null 오타 수정 및 메시지 조정
+        if (code == null || state == null || state.isEmpty()) {
             return ResponseEntity.badRequest().body(new LoginResponse(false, "네이버 인증 코드 또는 상태값이 필요합니다.", null, null, null));
         }
 
@@ -108,8 +106,8 @@ public class LoginController {
             JsonNode naverUserProfile = loginService.getNaverUserProfile(naverAccessToken).block();
 
             if (naverUserProfile == null || (naverUserProfile.has("resultcode") && naverUserProfile.get("resultcode").asText().equals("024"))) {
-                 String errorMsg = naverUserProfile != null ? naverUserProfile.get("message").asText() : "사용자 정보 접근 실패";
-                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 사용자 정보 획득 실패: " + errorMsg, null, null, null));
+                    String errorMsg = naverUserProfile != null ? naverUserProfile.get("message").asText() : "사용자 정보 접근 실패";
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 사용자 정보 획득 실패: " + errorMsg, null, null, null));
             }
             if (naverUserProfile == null || !naverUserProfile.has("response")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 사용자 정보를 가져올 수 없습니다.", null, null, null));
@@ -127,7 +125,7 @@ public class LoginController {
                 redirectUrl = "http://localhost:5173/onboarding";
             }
 
-            UserData userData = new UserData(
+            LoginResponse.UserData userData = new LoginResponse.UserData(
                 user.getId(),
                 user.getName(),
                 user.getNickname(),
@@ -148,6 +146,84 @@ public class LoginController {
             System.err.println("네이버 로그인 백엔드 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null, null));
+        }
+    }
+
+    // --- 구글 로그인 엔드포인트 ---
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> googleLogin(@RequestBody GoogleLoginRequest requestBody) {
+        String code = requestBody.getCode();
+        String state = requestBody.getState();
+
+        if (code == null || state == null || state.isEmpty()) { // 첫 번째 code == null은 오타인듯
+            return ResponseEntity.badRequest().body(new LoginResponse(false, "구글 인증 코드 또는 상태값이 필요합니다.", null, null, null)); // 여기도 LoginResponse 인자 개수 통일
+        }
+
+        try {
+            // 1. Google Access Token 받기
+            // !!! 여기를 loginService.getGoogleAccessToken(code) 로 변경 !!!
+            JsonNode tokenResponse = loginService.getGoogleAccessToken(code).block(); // state는 Google 토큰 요청에 직접적으로 쓰이지 않을 수 있음
+
+            if (tokenResponse == null || tokenResponse.has("error")) {
+                String errorMsg = tokenResponse != null ? tokenResponse.get("error_description").asText() : "알 수 없는 오류";
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "Google 토큰 획득 실패: " + errorMsg, null, null, null)); // 여기도 LoginResponse 인자 개수 통일
+            }
+
+            String googleAccessToken = tokenResponse.get("access_token").asText();
+
+            // 2. Google Access Token으로 사용자 프로필 정보 요청
+            // !!! 여기를 loginService.getGoogleUserProfile(googleAccessToken).block() 로 변경 !!!
+            JsonNode googleUserProfile = loginService.getGoogleUserProfile(googleAccessToken).block();
+
+            // Google 사용자 정보 응답 구조에 따라 에러 처리 로직 수정 필요
+            // Google userinfo API는 보통 "error" 필드가 직접적으로 없을 수 있음
+            if (googleUserProfile == null || googleUserProfile.has("error")) { // 예시
+                String errorMsg = googleUserProfile != null ? googleUserProfile.get("error_description").asText() : "알 수 없는 오류";
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "Google 사용자 정보 획득 실패: " + errorMsg, null, null, null)); // 여기도 LoginResponse 인자 개수 통일
+            }
+
+
+            // 3. 사용자 정보로 로그인/회원가입 처리
+            // !!! 여기를 loginService.authenticateGoogleUser(googleUserProfile) 로 변경 !!!
+            User user = loginService.authenticateGoogleUser(googleUserProfile);
+
+            // ... (리다이렉션 URL 및 응답 데이터는 네이버와 동일하게 사용 가능)
+            String redirectUrl;
+            boolean hasNickname = user.getNickname() != null && !user.getNickname().trim().isEmpty();
+
+            if (hasNickname) {
+                redirectUrl = "http://localhost:5173/home";
+            } else {
+                redirectUrl = "http://localhost:5173/onboarding";
+            }
+
+            LoginResponse.UserData userData = new LoginResponse.UserData(
+                user.getId(),
+                user.getName(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getSocialProvider() != null ? user.getSocialProvider().name() : null,
+                user.getSocialId()
+            );
+            String token = jwtTokenProvider.generateToken(user.getId()); // 토큰 생성 추가
+
+            return ResponseEntity.ok(new LoginResponse(
+                true,
+                "로그인 성공",
+                userData,
+                redirectUrl,
+                token // 토큰 추가
+            ));
+
+        } catch (WebClientResponseException e) { // WebClientResponseException 추가 처리
+            System.err.println("Google 로그인 중 WebClient 오류 발생: " + e.getMessage() + " - 응답 본문: " + e.getResponseBodyAsString()); // System.err.println 사용
+            e.printStackTrace(); // 스택 트레이스 출력
+            // Google에서 반환한 HTTP 상태 코드와 본문을 그대로 전달
+            return ResponseEntity.status(e.getStatusCode()).body(new LoginResponse(false, "Google 로그인 오류: " + e.getResponseBodyAsString(), null, null, null)); // 여기도 LoginResponse 인자 개수 통일
+        } catch (Exception e) {
+            System.err.println("Google 로그인 백엔드 처리 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null, null)); // 여기도 LoginResponse 인자 개수 통일
         }
     }
 
