@@ -26,6 +26,7 @@ public class LoginService {
     private final LoginRepository loginRepository;
     private final PasswordEncoder passwordEncoder; // PasswordEncoder 주입
     private final WebClient webClient;
+    private final WebClient googleWebClient;
 
     // 카카오 관련 환경 변수 (WebClient에 baseUrl로 설정했으므로, 여기서는 불필요)
     // @Value("${kakao.user-info-uri}")
@@ -64,6 +65,12 @@ public class LoginService {
                 .baseUrl("https://kapi.kakao.com") // 카카오 기본 URL
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .build();
+            // ⭐ 구글 전용 WebClient를 따로 만드세요!
+        this.googleWebClient = webClientBuilder
+            .baseUrl("https://oauth2.googleapis.com") // 구글 토큰 및 사용자 정보 API 기본 주소
+            // 구글 토큰 요청 시 필요한 기본 헤더가 있다면 추가 (없다면 생략 가능)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE) 
+            .build();
     }
 
     // --- 카카오 로그인 관련 메서드 ---
@@ -195,7 +202,7 @@ public class LoginService {
         formData.add("redirect_uri", googleRedirectUri); // ⭐ 이 부분이 중요!
         formData.add("grant_type", "authorization_code");
 
-        return webClient.post()
+        return googleWebClient.post()
                 .uri(googleTokenUri)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .bodyValue(formData)
@@ -206,7 +213,7 @@ public class LoginService {
 
     // Google 사용자 프로필 정보 획득 메서드
     public Mono<JsonNode> getGoogleUserProfile(String accessToken) {
-        return webClient.get()
+        return googleWebClient.get()
                 .uri(googleUserInfoUri)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .retrieve()

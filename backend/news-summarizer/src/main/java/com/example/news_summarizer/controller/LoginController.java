@@ -152,6 +152,9 @@ public class LoginController {
     // --- 구글 로그인 엔드포인트 ---
     @PostMapping("/google")
     public ResponseEntity<LoginResponse> googleLogin(@RequestBody GoogleLoginRequest requestBody) {
+            System.out.println("⭐ 구글 로그인 요청이 백엔드에 도착했습니다."); // 이 줄을 추가
+            System.out.println("받은 코드: " + requestBody.getCode()); // 이 줄을 추가
+            System.out.println("받은 상태값: " + requestBody.getState()); // 이 줄을 추가
         String code = requestBody.getCode();
         String state = requestBody.getState();
 
@@ -272,7 +275,6 @@ public class LoginController {
     // --- 직접 로그인 엔드포인트 ---
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> emailLogin(@RequestBody EmailLoginRequest requestBody) {
-       
         if (requestBody == null) {
             return ResponseEntity.badRequest().body(new LoginResponse(false, "이메일/비밀번호는 필수입니다.", null, null, null));
         }
@@ -298,15 +300,18 @@ public class LoginController {
                 user.getSocialId()
             );
 
+            String token = jwtTokenProvider.generateToken(user.getId());
+
             return ResponseEntity.ok(new LoginResponse(
                 true,
                 "로그인 성공",
                 userData,
-                redirectUrl, redirectUrl
+                redirectUrl,
+                token
             ));
 
         } catch (Exception e) {
-            System.err.println("이메일 로그인 로그인 백엔드 처리 중 오류: " + e.getMessage());
+            System.err.println("이메일 로그인 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null, null));
         }

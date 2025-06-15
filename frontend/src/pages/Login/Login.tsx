@@ -46,6 +46,13 @@ export default function Login() {
         if (data.user.id) {
             localStorage.setItem('userId', data.user.id); // localStorage에 사용자 ID 저장
         }
+        // 🔥 여기에 추가하자
+        if (data.token && typeof data.token === 'string' && data.token.startsWith('ey')) {
+          localStorage.setItem('userToken', data.token);
+        } else {
+          console.warn('⚠️ 예상과 다른 token 값:', data.token);
+        }       // 토큰 저장
+        localStorage.setItem('user', JSON.stringify(data.user))
         alert('로그인에 성공했습니다!');
 
         if (data.redirectUrl) {
