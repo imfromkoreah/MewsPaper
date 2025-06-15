@@ -16,6 +16,7 @@ public class LoginResponse {
     private String message;
     private UserData user; // 사용자 정보
     private String redirectUrl; // <-- 이 필드를 추가합니다.
+    private String token;
 
     // 내부 클래스 UserData (이전과 동일)
     @Getter

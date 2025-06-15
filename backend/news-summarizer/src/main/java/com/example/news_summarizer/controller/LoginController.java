@@ -9,6 +9,8 @@ import com.example.news_summarizer.dto.LoginResponse;
 import com.example.news_summarizer.dto.LoginResponse.UserData;
 import com.example.news_summarizer.dto.NaverLoginRequest;
 import com.example.news_summarizer.entity.User;
+import com.example.news_summarizer.security.JwtTokenProvider;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +20,11 @@ import org.springframework.web.bind.annotation.*;
 public class LoginController {
 
     private final LoginService loginService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public LoginController(LoginService loginService) {
-        this.loginService = loginService;
+    public LoginController(LoginService loginService, JwtTokenProvider jwtTokenProvider) {
+    this.loginService = loginService;
+    this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @PostMapping("/kakao")
@@ -28,7 +32,7 @@ public class LoginController {
         String kakaoAccessToken = requestBody.getAccessToken();
 
         if (kakaoAccessToken == null || kakaoAccessToken.isEmpty()) {
-            return ResponseEntity.badRequest().body(new LoginResponse(false, "카카오 액세스 토큰이 필요합니다.", null, null)); // redirectUrl null 추가
+            return ResponseEntity.badRequest().body(new LoginResponse(false, "카카오 액세스 토큰이 필요합니다.", null, null, null)); // redirectUrl null 추가
         }
 
         try {
@@ -37,7 +41,7 @@ public class LoginController {
             LoginRequest kakaoUserInfoFromApi = loginService.getKakaoUserInfo(kakaoAccessToken).block();
 
             if (kakaoUserInfoFromApi == null || kakaoUserInfoFromApi.getId() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "카카오 사용자 정보를 가져올 수 없습니다.", null, null)); // redirectUrl null 추가
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "카카오 사용자 정보를 가져올 수 없습니다.", null, null, null)); // redirectUrl null 추가
             }
 
             User user = loginService.authenticateKakaoUser(kakaoUserInfoFromApi);
@@ -62,19 +66,20 @@ public class LoginController {
                 user.getSocialProvider() != null ? user.getSocialProvider().name() : "", // socialProvider (enum을 String으로 변환)
                 user.getSocialId() // socialId
             );
-
+            String token = jwtTokenProvider.generateToken(user.getId());
             // 최종 LoginResponse 반환 시 redirectUrl 포함
             return ResponseEntity.ok(new LoginResponse(
                 true,
                 "로그인 성공",
                 userData,
-                redirectUrl // 결정된 redirectUrl 포함
+                redirectUrl, // 결정된 redirectUrl 포함
+                token
             ));
 
         } catch (Exception e) {
             System.err.println("카카오 로그인 백엔드 처리 중 오류: " + e.getMessage());
             e.printStackTrace(); // 스택 트레이스 출력하여 디버깅 용이하게 함
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null)); // redirectUrl null 추가
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null, null)); // redirectUrl null 추가
         }
     }
 
@@ -85,7 +90,7 @@ public class LoginController {
         String state = requestBody.getState();
 
         if (code == null || code == null || state == null || state.isEmpty()) { // 첫 번째 code == null은 오타인듯
-            return ResponseEntity.badRequest().body(new LoginResponse(false, "네이버 인증 코드 또는 상태값이 필요합니다.", null, null));
+            return ResponseEntity.badRequest().body(new LoginResponse(false, "네이버 인증 코드 또는 상태값이 필요합니다.", null, null, null));
         }
 
         try {
@@ -94,7 +99,7 @@ public class LoginController {
 
             if (tokenResponse == null || tokenResponse.has("error")) {
                 String errorMsg = tokenResponse != null ? tokenResponse.get("error_description").asText() : "알 수 없는 오류";
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 토큰 획득 실패: " + errorMsg, null, null));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 토큰 획득 실패: " + errorMsg, null, null, null));
             }
 
             String naverAccessToken = tokenResponse.get("access_token").asText();
@@ -104,10 +109,10 @@ public class LoginController {
 
             if (naverUserProfile == null || (naverUserProfile.has("resultcode") && naverUserProfile.get("resultcode").asText().equals("024"))) {
                  String errorMsg = naverUserProfile != null ? naverUserProfile.get("message").asText() : "사용자 정보 접근 실패";
-                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 사용자 정보 획득 실패: " + errorMsg, null, null));
+                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 사용자 정보 획득 실패: " + errorMsg, null, null, null));
             }
             if (naverUserProfile == null || !naverUserProfile.has("response")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 사용자 정보를 가져올 수 없습니다.", null, null));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LoginResponse(false, "네이버 사용자 정보를 가져올 수 없습니다.", null, null, null));
             }
 
             // 3. 사용자 정보로 로그인/회원가입 처리
@@ -130,18 +135,19 @@ public class LoginController {
                 user.getSocialProvider() != null ? user.getSocialProvider().name() : null,
                 user.getSocialId()
             );
-
+            String token = jwtTokenProvider.generateToken(user.getId());
             return ResponseEntity.ok(new LoginResponse(
                 true,
                 "로그인 성공",
                 userData,
-                redirectUrl
+                redirectUrl,
+                token
             ));
 
         } catch (Exception e) {
             System.err.println("네이버 로그인 백엔드 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null, null));
         }
     }
 

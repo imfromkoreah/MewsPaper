@@ -134,13 +134,16 @@ const useKakaoLogin = (kakaoAppKey: string) => {
 
           const responseData: BackendLoginResponse = await backendResponse.json();
           console.log('🎉 백엔드 로그인 성공 (서버로부터 응답):', responseData);
-
-          if (responseData.user) {
-            setUserData(responseData.user);
-            if (responseData.user.id) {
-                localStorage.setItem('userId', responseData.user.id);
-            }
+          
+          if (responseData.token) {
+          localStorage.setItem('userToken', responseData.token);  // ← 여기에 토큰 저장 추가
           }
+
+          if (responseData.token) {
+          console.log('저장할 토큰:', responseData.token);
+          localStorage.setItem('userToken', responseData.token);
+          console.log('토큰 저장 완료');
+        }
           setIsLoggedIn(true);
 
           // 백엔드에서 받은 redirectUrl로 이동하는 로직 추가
