@@ -2,13 +2,17 @@ package com.example.news_summarizer.controller;
 
 import com.example.news_summarizer.dto.NotificationRequest;
 import com.example.news_summarizer.dto.UpdateNickName;
+import com.example.news_summarizer.dto.UserAttendanceRequest;
+import com.example.news_summarizer.dto.UserAttendanceResponse;
 import com.example.news_summarizer.entity.User;
+import com.example.news_summarizer.entity.UserAttendance;
 import com.example.news_summarizer.entity.NotificationSetting;
 import com.example.news_summarizer.service.UserService;
 import com.example.news_summarizer.dto.UserPreferenceRequest; // 추가: UserPreferenceRequest DTO 임포트
 import com.example.news_summarizer.entity.UserPreference;     // 추가: UserPreference Entity 임포트
 import com.example.news_summarizer.repository.UserRepository;
 import com.example.news_summarizer.security.JwtTokenProvider;
+import com.example.news_summarizer.service.UserAttendanceService;
 import com.example.news_summarizer.service.UserPreferenceService; // 추가: UserPreferenceService 임포트
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/user")
@@ -28,14 +35,16 @@ public class UserController {
     private final UserRepository userRepository;
     private final UserService userService;
     private final UserPreferenceService userPreferenceService;
+    private final UserAttendanceService userAttendanceService;
 
     public UserController(JwtTokenProvider jwtTokenProvider, UserRepository userRepository,
-                      UserService userService, UserPreferenceService userPreferenceService) {
-    this.jwtTokenProvider = jwtTokenProvider;
-    this.userRepository = userRepository;
-    this.userService = userService;
-    this.userPreferenceService = userPreferenceService;
-}
+                      UserService userService, UserPreferenceService userPreferenceService, UserAttendanceService userAttendanceService) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
+        this.userService = userService;
+        this.userPreferenceService = userPreferenceService;
+        this.userAttendanceService = userAttendanceService;
+    }
 
     @GetMapping("/me")
     public ResponseEntity<?> getMyInfo(@RequestHeader("Authorization") String authHeader) {
@@ -178,6 +187,44 @@ public class UserController {
             response.put("success", false);
             response.put("message", "서버 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/attendance") // HTTP POST 요청을 "/api/attendance/stamp" 경로로 매핑합니다.
+    public ResponseEntity<UserAttendanceResponse> stampAttendance(@RequestBody UserAttendanceRequest request) {
+        try {
+            Long userId = request.getUserId();
+
+            // AttendanceService를 호출하여 출석 기록을 처리합니다.
+            userAttendanceService.recordAttendance(userId);
+
+            // 성공 응답 반환
+            return ResponseEntity.ok(new UserAttendanceResponse(true, "출석 도장이 성공적으로 기록되었습니다!"));
+        } catch (IllegalArgumentException e) {
+            // 사용자 ID가 유효하지 않거나 사용자를 찾을 수 없을 때 (404 Not Found)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new UserAttendanceResponse(false, e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new UserAttendanceResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new UserAttendanceResponse(false, "출석 도장 기록 중 오류가 발생했습니다."));
+        }
+    }
+
+    @GetMapping("/attendance/{userId}") 
+    public ResponseEntity<UserAttendanceResponse> getUserAttendanceDates(@PathVariable("userId") Long userId) {
+        try {
+            List<UserAttendance> attendances = userAttendanceService.getUserAttendances(userId);
+
+            // Attendance 객체 리스트에서 checkDate만 추출하여 String 리스트로 변환
+            List<String> attendanceDates = attendances.stream()
+                    .map(attendance -> attendance.getAttendanceDate().toString()) // LocalDate를 "YYYY-MM-DD" 문자열로 변환
+                    .collect(Collectors.toList());
+            // ApiResponse에 날짜 리스트를 담아 반환
+            return ResponseEntity.ok(new UserAttendanceResponse(true, "사용자 출석 기록 조회 성공", attendanceDates));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new UserAttendanceResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new UserAttendanceResponse(false, "사용자 출석 기록 조회 중 오류가 발생했습니다."));
         }
     }
     

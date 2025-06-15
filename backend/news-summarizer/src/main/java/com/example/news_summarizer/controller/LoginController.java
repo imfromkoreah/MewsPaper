@@ -232,7 +232,7 @@ public class LoginController {
     public ResponseEntity<LoginResponse> emailRegister(@RequestBody EmailLoginRequest requestBody) {
        
         if (requestBody == null) {
-            return ResponseEntity.badRequest().body(new LoginResponse(false, "이메일/비밀번호는 필수입니다.", null, null));
+            return ResponseEntity.badRequest().body(new LoginResponse(false, "이메일/비밀번호는 필수입니다.", null, null, null));
         }
 
         try {
@@ -260,13 +260,13 @@ public class LoginController {
                 true,
                 "로그인 성공",
                 userData,
-                redirectUrl
+                redirectUrl, ""
             ));
 
         } catch (Exception e) {
             System.err.println("이메일 로그인 로그인 백엔드 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null, null));
         }
     }
     // --- 직접 로그인 엔드포인트 ---
@@ -274,7 +274,7 @@ public class LoginController {
     public ResponseEntity<LoginResponse> emailLogin(@RequestBody EmailLoginRequest requestBody) {
        
         if (requestBody == null) {
-            return ResponseEntity.badRequest().body(new LoginResponse(false, "이메일/비밀번호는 필수입니다.", null, null));
+            return ResponseEntity.badRequest().body(new LoginResponse(false, "이메일/비밀번호는 필수입니다.", null, null, null));
         }
 
         try {
@@ -302,13 +302,13 @@ public class LoginController {
                 true,
                 "로그인 성공",
                 userData,
-                redirectUrl
+                redirectUrl, redirectUrl
             ));
 
         } catch (Exception e) {
             System.err.println("이메일 로그인 로그인 백엔드 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new LoginResponse(false, "서버 오류: " + e.getMessage(), null, null, null));
         }
     }
     
