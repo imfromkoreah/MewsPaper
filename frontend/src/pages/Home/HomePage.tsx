@@ -1,14 +1,32 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
 import anchorImg from '../../assets/character/anchor.png';
 import JellyOff from '../../assets/svg/jelly_off.svg';
+import JellyOn from '../../assets/svg/jelly_on.svg';
 import Message from '../../assets/svg/message.svg';
 import PurpleDot from '../../assets/svg/check_p.svg';
 import Week from '../../assets/svg/week.svg';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
 
-  const attendanceIcons = new Array(7).fill(JellyOff);
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    axios.get(`http://localhost:8080/api/user/attendance/${userId}`)
+      .then((res) => {
+        if (res.data.success && res.data.data) {
+          setAttendanceDates(res.data.data);
+        }
+      })
+      .catch((err) => {
+        console.error('홈페이지 출석 정보 불러오기 실패:', err);
+      });
+  }, []);
 
   const today = new Date();
   const month = today.getMonth() + 1;
@@ -16,6 +34,12 @@ const HomePage = () => {
   const weekdays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
   const weekday = weekdays[today.getDay()];
   const formattedDate = `${month.toString().padStart(2, '0')}월 ${date.toString().padStart(2, '0')}일 ${weekday}`;
+
+  const totalDays = 7;
+  const checkedInCount = attendanceDates.length;
+  const attendanceIcons = Array.from({ length: totalDays }, (_, idx) =>
+    idx < checkedInCount ? JellyOn : JellyOff
+  );
 
   return (
     <div className="flex flex-col items-center space-y-10 pt-10 pb-16 px-6">
@@ -41,7 +65,7 @@ const HomePage = () => {
               7일 출석 미션 중
             </span>
             <span className="text-[#090a0a] text-lg font-bold font-['Inter'] leading-normal">
-              2일 출석
+              {checkedInCount}일 출석
             </span>
             <img src={PurpleDot} alt="출석 상태 점" className="absolute -right-6 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" />
           </div>

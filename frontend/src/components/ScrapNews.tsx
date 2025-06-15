@@ -25,6 +25,7 @@ const ScrapNews: React.FC = () => {
       스크랩한 뉴스가 없습니다.
     </ScrapNewsWrapper>
   );
+  
 };
 
 export default ScrapNews;

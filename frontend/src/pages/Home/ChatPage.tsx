@@ -1,5 +1,9 @@
 import { useEffect, useState, useRef, useLayoutEffect, forwardRef } from 'react';
-import MewDoc from '../../assets/character/mewsdoc.png';
+
+import profileImg1 from '../../assets/character/mewsdoc.png';
+import profileImg2 from '../../assets/character/mewsdoc2.png';
+import profileImg3 from '../../assets/character/mewsdoc3.png';
+import profileImg4 from '../../assets/character/mewsdoc4.png';
 
 interface Message {
   id: number;
@@ -15,19 +19,33 @@ const messages: Message[] = [
   { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
 ];
 
-// 🐱 봇 프로필 + 닉네임 묶음 컴포넌트
+const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4];
+
 function ChatProfile() {
+  const savedIndex = localStorage.getItem('profileIndex');
+  const profileIndex = savedIndex !== null ? parseInt(savedIndex) : 0;
+  const selectedProfile = profileImages[profileIndex];
+
   return (
     <>
-      <div className="absolute left-[51px] top-[2px] text-black text-[13px] font-bold font-['Noto_Sans_KR'] z-10">냥냥박사</div>
+      <div className="absolute left-[51px] top-[2px] text-black text-[13px] font-bold font-['Noto_Sans_KR'] z-10">
+        냥냥박사
+      </div>
       <div className="w-10 h-10 bg-blue-50 rounded-full absolute left-[4px] top-[4px] z-10" />
-      <img className="w-12 h-12 absolute left-0 top-0 z-10" src={MewDoc} alt="냥냥박사 프로필" />
+      <img className="w-12 h-12 absolute left-0 top-0 z-10" src={selectedProfile} alt="냥냥박사 프로필" />
     </>
   );
 }
 
 // 🐱 한 개의 봇 말풍선 메시지를 그리는 컴포넌트
-const ChatMessage = forwardRef<HTMLDivElement, { text: string; isVisible: boolean; isLoading: boolean; topOffset: number; textSize: string }>(
+interface ChatMessageProps {
+  text: string;
+  isVisible: boolean;
+  isLoading: boolean;
+  topOffset: number;
+  textSize: string;
+}
+const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
   ({ text, isVisible, isLoading, topOffset, textSize }, ref) => (
     <div
       ref={ref}
@@ -37,16 +55,25 @@ const ChatMessage = forwardRef<HTMLDivElement, { text: string; isVisible: boolea
       style={{ top: topOffset }}
     >
       {isVisible ? (
-        <div className={`text-[#1c283b] text-base font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}>{text}</div>
+        <div
+          className={`text-[#1c283b] text-base font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}
+        >
+          {text}
+        </div>
       ) : isLoading ? (
         <LoadingDots />
       ) : null}
     </div>
   )
 );
+ChatMessage.displayName = 'ChatMessage';
 
 // 💬 사용자 말풍선 메시지를 그리는 컴포넌트
-const UserChatMessage = forwardRef<HTMLDivElement, { text: string; topOffset: number }>(({ text, topOffset }, ref) => (
+interface UserChatMessageProps {
+  text: string;
+  topOffset: number;
+}
+const UserChatMessage = forwardRef<HTMLDivElement, UserChatMessageProps>(({ text, topOffset }, ref) => (
   <div
     ref={ref}
     className="max-w-[260px] px-4 py-2.5 absolute right-0 inline-flex justify-end items-center gap-2.5 overflow-hidden bg-[#6B4EFF] rounded-tl-[20px] rounded-tr-[20px] rounded-bl-[20px] min-h-[40px]"
@@ -55,6 +82,7 @@ const UserChatMessage = forwardRef<HTMLDivElement, { text: string; topOffset: nu
     <div className="text-white font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap text-base">{text}</div>
   </div>
 ));
+UserChatMessage.displayName = 'UserChatMessage';
 
 // ⏳ 로딩 애니메이션
 function LoadingDots() {
@@ -87,14 +115,15 @@ export default function ChatPage() {
   const [userMessageTops, setUserMessageTops] = useState<number[]>([]);
 
   useEffect(() => {
-    (async () => {
+    const showMessages = async () => {
       for (let i = 0; i < messages.length; i++) {
         setActiveIndex(i);
         await new Promise((r) => setTimeout(r, messages[i].delay));
         setVisibleMessages((prev) => [...prev, messages[i].id]);
       }
       setInputVisible(true);
-    })();
+    };
+    showMessages();
   }, []);
 
   useLayoutEffect(() => {
@@ -154,7 +183,10 @@ export default function ChatPage() {
         ))}
 
         {inputVisible && (
-          <div className="fixed left-1/2 transform -translate-x-1/2 w-[370px] flex items-center space-x-2" style={{ bottom: 70, zIndex: 20 }}>
+          <div
+            className="fixed left-1/2 transform -translate-x-1/2 w-[370px] flex items-center space-x-2"
+            style={{ bottom: 70, zIndex: 20 }}
+          >
             <div className="flex-1 h-12 bg-[#e3e4e5] rounded-full relative">
               <input
                 type="text"
