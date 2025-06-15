@@ -6,6 +6,8 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false); // 로그인 로딩 상태
+  const [error, setError] = useState<string | null>(null); // 로그인 에러 메시지
 
   // 이메일 유효성 체크
   const isValidEmail = (email: string) => {
@@ -16,9 +18,58 @@ export default function Login() {
   const canSubmit = isValidEmail(email) && password.length >= 8;
 
   // 로그인 버튼 클릭 시 처리 함수
-  const handleSubmit = () => {
-    alert(`로그인 시도: ${email}`);
-    navigate('/home');
+  const handleSubmit = async () => {
+    // 유효성 검사 통과 여부 확인
+    if (!canSubmit) {
+      setError('이메일 또는 비밀번호 형식이 올바르지 않습니다.');
+      return;
+    }
+
+    setLoading(true); // 로그인 시도 시 로딩 상태 활성화
+    setError(null);   // 이전 에러 메시지 초기화
+
+    try {
+      // ⭐ 백엔드 로그인 API 엔드포인트로 요청을 보냅니다.
+      // 이 URL은 실제 백엔드 API 명세에 따라 변경해야 합니다.
+      const response = await fetch('http://localhost:8080/api/auth/login', { // 백엔드 로그인 API URL
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        // ⭐ 로그인 성공 처리
+        const data = await response.json();
+        console.log('로그인 성공:', data);
+        if (data.user.id) {
+            localStorage.setItem('userId', data.user.id); // localStorage에 사용자 ID 저장
+        }
+        alert('로그인에 성공했습니다!');
+
+        if (data.redirectUrl) {
+            window.location.href = data.redirectUrl; // 전체 페이지 리로드
+        } else {
+            navigate('/home'); // 기본 홈 페이지로 이동
+        }
+
+      } else {
+        // ⭐ 로그인 실패 처리
+        const errorData = await response.json();
+        const errorMessage = errorData.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
+        setError(errorMessage);
+        console.error('로그인 실패:', errorData);
+        alert(`로그인 실패: ${errorMessage}`);
+      }
+    } catch (err) {
+      // ⭐ 네트워크 오류 등 예외 처리
+      console.error('로그인 중 네트워크 오류 발생:', err);
+      setError('서버와 통신 중 오류가 발생했습니다. 다시 시도해주세요.');
+      alert('서버 오류: 로그인에 실패했습니다.');
+    } finally {
+      setLoading(false); // 로딩 상태 비활성화
+    }
   };
 
   // 회원가입 페이지로 이동 함수
@@ -56,11 +107,11 @@ export default function Login() {
             <button
               onClick={handleSubmit}
               className={`w-full h-[50px] rounded-lg text-white font-semibold text-base ${
-                canSubmit ? 'bg-[#6B4EFF]' : 'bg-[#d2d5d6]'
+                canSubmit && !loading ? 'bg-[#6B4EFF]' : 'bg-[#d2d5d6] cursor-not-allowed'
               }`}
-              disabled={!canSubmit}
+              disabled={!canSubmit || loading} // 로딩 중에도 버튼 비활성화
             >
-              로그인
+              {loading ? '로그인 중...' : '로그인'}
             </button>
           </div>
 

@@ -9,11 +9,14 @@ export default function Join() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
+  const [loading, setLoading] = useState(false); // API 호출 로딩 상태
+  const [error, setError] = useState<string | null>(null); // API 호출 에러 메시지
+
 
   // 이메일 유효성 체크 (Login과 동일)
-const isValidEmail = (email: string) => {
-  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
-};
+  const isValidEmail = (email: string) => {
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+  };
 
   // 비밀번호 유효성 체크: 영문, 숫자, 특수문자 포함 8자 이상
   const isValidPassword = (pw: string) => {
@@ -26,11 +29,47 @@ const isValidEmail = (email: string) => {
   // 제출 가능 조건: 이메일, 비밀번호 유효 + 비밀번호 확인 일치
   const canSubmit = isValidEmail(email) && isValidPassword(password) && isMatch;
 
-  const handleSubmit = () => {
-    // 회원가입 로직 처리 가능
-    alert(`회원가입 시도: ${email}`);
-    navigate('/login');
+const handleSubmit = async () => {
+    if (!canSubmit) {
+      alert('입력된 정보를 다시 확인해주세요.');
+      return;
+    }
+
+    setLoading(true); // 로딩 시작
+    setError(null);   // 이전 에러 초기화
+
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/email', { // ⭐ 이 URL을 백엔드 회원가입 API에 맞춰주세요
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        // 성공적으로 회원가입
+        alert('회원가입이 완료되었습니다. 로그인 해주세요!');
+        console.log('회원가입 성공:', await response.json());
+        navigate('/login'); // 로그인 페이지로 이동
+      } else {
+        // 회원가입 실패 (예: 이미 존재하는 이메일)
+        const errorData = await response.json();
+        const errorMessage = errorData.message || '회원가입에 실패했습니다.';
+        setError(errorMessage);
+        alert(`회원가입 실패: ${errorMessage}`);
+        console.error('회원가입 실패:', errorData);
+      }
+    } catch (err) {
+      // 네트워크 오류 등 예외 발생
+      console.error('회원가입 중 오류 발생:', err);
+      setError('서버와 통신 중 오류가 발생했습니다.');
+      alert('서버 오류: 회원가입에 실패했습니다.');
+    } finally {
+      setLoading(false); // 로딩 종료
+    }
   };
+
 
   return (
     <div className="max-w-md mx-auto h-screen flex flex-col justify-center items-center px-6 py-10 border border-gray-200 rounded shadow-sm">
@@ -102,11 +141,11 @@ const isValidEmail = (email: string) => {
               <button
                 onClick={handleSubmit}
                 className={`w-full h-[50px] rounded-lg text-white font-semibold text-base ${
-                  canSubmit ? 'bg-[#6B4EFF]' : 'bg-[#d2d5d6]'
+                  canSubmit && !loading ? 'bg-[#6B4EFF]' : 'bg-[#d2d5d6] cursor-not-allowed'
                 }`}
-                disabled={!canSubmit}
+                disabled={!canSubmit || loading} // 로딩 중에는 버튼 비활성화
               >
-                회원가입
+                {loading ? '회원가입 중...' : '회원가입'}
               </button>
             </div>
 
