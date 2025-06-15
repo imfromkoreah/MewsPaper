@@ -7,10 +7,12 @@ import com.example.news_summarizer.entity.NotificationSetting;
 import com.example.news_summarizer.service.UserService;
 import com.example.news_summarizer.dto.UserPreferenceRequest; // 추가: UserPreferenceRequest DTO 임포트
 import com.example.news_summarizer.entity.UserPreference;     // 추가: UserPreference Entity 임포트
+import com.example.news_summarizer.repository.UserRepository;
+import com.example.news_summarizer.security.JwtTokenProvider;
 import com.example.news_summarizer.service.UserPreferenceService; // 추가: UserPreferenceService 임포트
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -19,16 +21,48 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/user") // 사용자 관련 API는 /api/user 아래에 두는 것이 일반적
+@RequestMapping("/api/user")
 public class UserController {
 
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
     private final UserService userService;
-    private final UserPreferenceService userPreferenceService; // 추가: UserPreferenceService 주입
+    private final UserPreferenceService userPreferenceService;
 
-    // 생성자 주입 방식으로 서비스 주입
-    public UserController(UserService userService, UserPreferenceService userPreferenceService) {
-        this.userService = userService;
-        this.userPreferenceService = userPreferenceService; // 추가: UserPreferenceService 초기화
+    public UserController(JwtTokenProvider jwtTokenProvider, UserRepository userRepository,
+                      UserService userService, UserPreferenceService userPreferenceService) {
+    this.jwtTokenProvider = jwtTokenProvider;
+    this.userRepository = userRepository;
+    this.userService = userService;
+    this.userPreferenceService = userPreferenceService;
+}
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyInfo(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
+
+        return userRepository.findById(userId)
+                .map(user -> ResponseEntity.ok(user))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ID로 사용자 조회
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserInfo(@PathVariable Long id) {
+        User user = userService.findById(id);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", user.getId());
+        response.put("email", user.getEmail());
+        response.put("nickname", user.getNickname());
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/update-nickname") // 닉네임 업데이트 엔드포인트
@@ -146,4 +180,5 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+    
 }
