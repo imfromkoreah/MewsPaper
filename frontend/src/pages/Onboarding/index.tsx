@@ -18,7 +18,7 @@ export default function Onboarding() {
     const [showNicknameWarning, setShowNicknameWarning] = useState(false);
     const [selectedRoutineIndex, setSelectedRoutineIndex] = useState<number | null>(1);
     // 새롭게 추가되는 상태: 사용자가 선택한 관심사 (preference keys)
-    const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]); 
+    const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
 
     const navigate = useNavigate();
     const BACKEND_BASE_URL = 'http://localhost:8080';
@@ -168,11 +168,11 @@ export default function Onboarding() {
             return false;
         }
 
+        // ⭐ 여기를 수정했습니다: 선택된 관심사가 없으면 경고 메시지를 띄우고 false 반환
         if (selectedKeys.length === 0) {
-            // 사용자가 관심사를 하나도 선택하지 않은 경우
-            console.warn("선택된 관심사가 없습니다.");
-            alert("관심사를 최소 하나 이상 선택해주세요.");
-            return false;
+            console.warn("관심사가 선택되지 않았습니다. 저장을 건너뛰고 다음 단계로 진행할 수 없습니다.");
+            alert("관심사를 최소 하나 이상 선택해주세요."); // 사용자에게 경고 메시지 띄우기
+            return false; // false를 반환하여 next 함수에서 진행을 막음
         }
 
         try {
@@ -212,10 +212,6 @@ export default function Onboarding() {
                 setShowNicknameWarning(true);
                 return;
             }
-            // 닉네임은 다음 페이지로 넘어가기 전에 저장하지 않고, 최종 제출 시에만 저장하도록 유지
-            // 또는 여기에서 저장하고 싶다면 아래 주석 해제
-            // const nicknameSaved = await saveNicknameToBackend(nickname);
-            // if (!nicknameSaved) return;
         }
 
         // 페이지 2 (알림 루틴) 유효성 검사
@@ -224,10 +220,6 @@ export default function Onboarding() {
                 alert('알림 루틴을 선택해주세요.');
                 return;
             }
-            // 알림 루틴은 다음 페이지로 넘어가기 전에 저장하지 않고, 최종 제출 시에만 저장하도록 유지
-            // 또는 여기에서 저장하고 싶다면 아래 주석 해제
-            // const notificationsSaved = await saveNotificationsToBackend(selectedRoutineIndex);
-            // if (!notificationsSaved) return;
         }
 
         // 마지막 페이지가 아닌 경우 다음 페이지로 이동
@@ -237,32 +229,35 @@ export default function Onboarding() {
         }
 
         // --- 최종 제출 (마지막 페이지에서 '시작하기' 버튼 클릭 시) ---
+        // 여기서 page는 3 (Onboarding4)입니다.
 
         // 1. 닉네임 저장
         const nicknameSaved = await saveNicknameToBackend(nickname);
         if (!nicknameSaved) {
-            // 닉네임 저장 실패 시, 사용자에게 알리고 함수 종료
-            return;
+            return; // 저장 실패 시 진행 중단
         }
 
         // 2. 알림 설정 저장 (선택된 루틴이 있어야 함)
         if (selectedRoutineIndex === null) {
             alert('알림 루틴이 선택되지 않았습니다. 다시 확인해주세요.');
-            return;
+            return; // 선택 안 된 경우 진행 중단
         }
         const notificationsSaved = await saveNotificationsToBackend(selectedRoutineIndex);
         if (!notificationsSaved) {
-            // 알림 저장 실패 시, 사용자에게 알리고 함수 종료
-            return;
+            return; // 저장 실패 시 진행 중단
         }
 
         // 3. 관심사 설정 저장 (selectedPreferences 상태 사용)
-        // Onboarding4에서 사용자가 선택한 관심사가 selectedPreferences에 잘 담겨있어야 합니다.
-        // Onboarding4 컴포넌트가 handlePreferencesUpdate 콜백을 통해 이 데이터를 상위로 전달해야 합니다.
+        // saveUserPreferencesToBackend 함수 내부에서 selectedPreferences.length가 0인지 확인하여
+        // 백엔드 호출 여부를 결정하고, 유효성 검사에 실패하면 false를 반환합니다.
         const preferencesSaved = await saveUserPreferencesToBackend(selectedPreferences);
-        if (preferencesSaved) {
-            navigate('/home'); // 모든 데이터 저장 성공 시 홈으로 이동
+        if (!preferencesSaved) { // preferencesSaved가 false이면 (관심사 선택 안 했거나 저장 실패)
+            // saveUserPreferencesToBackend 함수 내부에서 이미 alert 메시지를 띄웠으므로 여기서는 추가 작업 불필요
+            return; // 진행 중단
         }
+
+        // 모든 데이터 저장 성공 시 홈으로 이동
+        navigate('/home'); 
     };
 
     const PageComponent = pages[page];
