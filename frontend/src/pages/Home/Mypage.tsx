@@ -52,6 +52,7 @@ export default function MyPage() {
       .get(`http://localhost:8080/api/user/${userId}`)
       .then((res) => {
         setUserInfo(res.data);
+        localStorage.setItem('nickname', res.data.nickname);  // 추가!
       })
       .catch((err) => {
         console.error('사용자 정보 불러오기 실패:', err);
@@ -127,6 +128,7 @@ export default function MyPage() {
 
       if (response.data.success) {
         setUserInfo((prev) => ({ ...prev, nickname: newNickname }));
+        localStorage.setItem('nickname', newNickname);  // 추가!
         setShowNicknameEditPopup(false);
       } else {
         alert('닉네임 변경 실패: ' + response.data.message);
@@ -233,36 +235,41 @@ export default function MyPage() {
           </div>
         )}
 
-        {showProfilePopup && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg font-medium">
-              <h3 className="text-lg font-semibold mb-4">프로필을 선택하세요</h3>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                {profileImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`프로필 ${index + 1}`}
-                    className={`w-20 h-20 rounded-full cursor-pointer border-4 ${
-                      selectedProfileIndex === index ? 'border-purple-500' : 'border-transparent'
-                    }`}
-                    onClick={() => {
-                      setSelectedProfileIndex(index);
-                      localStorage.setItem('profileIndex', String(index));
-                      setShowProfilePopup(false);
-                    }}
-                  />
-                ))}
-              </div>
-              <button
-                onClick={() => setShowProfilePopup(false)}
-                className="mt-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm"
-              >
-                닫기
-              </button>
-            </div>
+{showProfilePopup && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+    <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg font-medium">
+      <h3 className="text-lg font-semibold mb-4">프로필을 선택하세요</h3>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        {profileImages.map((img, index) => (
+          <div
+            key={index}
+            className={`w-24 h-24 border-4 cursor-pointer flex items-center justify-center overflow-hidden ${
+              selectedProfileIndex === index ? 'border-purple-500' : 'border-transparent'
+            }`}
+            onClick={() => {
+              setSelectedProfileIndex(index);
+              localStorage.setItem('profileIndex', String(index));
+              setShowProfilePopup(false);
+            }}
+          >
+            <img
+              src={img}
+              alt={`프로필 ${index + 1}`}
+              className="object-contain w-full h-full"
+            />
           </div>
-        )}
+        ))}
+      </div>
+      <button
+        onClick={() => setShowProfilePopup(false)}
+        className="mt-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm"
+      >
+        닫기
+      </button>
+    </div>
+  </div>
+)}
+
 
         {showNicknameEditPopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
