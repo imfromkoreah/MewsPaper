@@ -283,6 +283,9 @@ public class LoginService {
                 }
             }
         } else {
+             if(pString == "login"){
+                throw new BadCredentialsException("존재하지 않는 사용자입니다. 회원가입을 진행해 주세요.");
+            }
             // 신규 사용자: DB에 저장
             String encodedPassword = passwordEncoder.encode(password);
 
