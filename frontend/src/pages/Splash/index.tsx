@@ -8,6 +8,7 @@ import naverIcon from "../../assets/svg/naver.svg";
 // 만약 'hooks/index.ts'라면 'hooks'로 임포트 가능합니다.
 import useKakaoLogin from './hooks/index'; // 경로 확인 필요
 import useNaverLogin from './hooks/useNaverLogin'; // 새로 만든 네이버 훅
+import useGoogleLogin from './hooks/useGoogleLogin'; 
 
 // 환경 변수들 불러오기
 const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY;
@@ -15,6 +16,9 @@ const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID;
 const NAVER_CALLBACK_URL = import.meta.env.VITE_NAVER_CALLBACK_URL;
 const FRONTEND_ORIGIN = import.meta.env.VITE_FRONTEND_ORIGIN; // 프론트엔드 Origin
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL; // 백엔드 URL
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;       // Google Client ID
+const GOOGLE_AUTH_URL = import.meta.env.VITE_GOOGLE_AUTH_URL;         // Google Auth URL
+const GOOGLE_SCOPE = import.meta.env.VITE_GOOGLE_SCOPE;               // Google Scope
 
 // 환경 변수 설정 여부 경고 (이전과 동일)
 if (
@@ -70,6 +74,21 @@ export default function Splash() {
     backendBaseUrl: BACKEND_BASE_URL,
   });
 
+  const {
+    startGoogleLogin,
+    isLoggingIn: isGoogleLoggingIn,
+    isLoggedIn: isGoogleLoggedIn,
+    error: googleError,
+    userData: googleUserData,
+  } = useGoogleLogin({
+    googleClientId: GOOGLE_CLIENT_ID,
+    googleAuthUrl: GOOGLE_AUTH_URL,
+    googleScope: GOOGLE_SCOPE,
+    frontendOrigin: FRONTEND_ORIGIN,
+    backendBaseUrl: BACKEND_BASE_URL,
+  });
+
+
   // 카카오 로그인 성공 시 처리 (이 부분은 훅 내부에서 navigate를 호출하기 때문에 주석 처리해도 됩니다)
   // 하지만 훅에서 navigate를 호출하는 것이 확인되므로 이 useEffect는 남겨둬도 무방합니다.
   useEffect(() => {
@@ -89,6 +108,14 @@ export default function Splash() {
     }
   }, [isNaverLoggedIn, naverUserData]);
 
+  useEffect(() => {
+    if (isGoogleLoggedIn) {
+      console.log("Google 로그인 성공! 다음 페이지로 이동 준비:", googleUserData);
+      // useGoogleLogin 훅 내부에서 navigate 또는 window.location.href로 이동을 처리합니다.
+      // 필요하다면 이곳에서 추가 로직을 실행할 수 있습니다.
+    }
+  }, [isGoogleLoggedIn, googleUserData]);
+
   // Kakao 앱 키가 설정되지 않은 경우 에러 메시지 렌더링 (이전과 동일)
   if (
     !KAKAO_APP_KEY || KAKAO_APP_KEY === 'YOUR_KAKAO_JAVASCRIPT_APP_KEY' || typeof KAKAO_APP_KEY === 'undefined'
@@ -105,6 +132,11 @@ export default function Splash() {
   // Naver 로그인 관련 에러 표시 (선택 사항)
   if (naverError) {
     console.error("Naver 로그인 에러:", naverError);
+    // 사용자에게 에러 메시지를 표시하는 UI를 추가할 수 있습니다.
+  }
+
+  if (googleError) {
+    console.error("Google 로그인 에러:", googleError);
     // 사용자에게 에러 메시지를 표시하는 UI를 추가할 수 있습니다.
   }
 
@@ -146,10 +178,14 @@ export default function Splash() {
               {isNaverLoggingIn ? 'Naver 로그인 중...' : 'Naver로 로그인'}
             </span>
           </button>
-          <button className="w-[294px] h-12 flex items-center justify-center bg-neutral-100 rounded-lg" disabled={isKakaoLoggingIn || isNaverLoggingIn}>
+          <button
+            className="w-[294px] h-12 flex items-center justify-center bg-neutral-100 rounded-lg"
+            onClick={startGoogleLogin} // ⭐ 이 라인 추가
+            disabled={isKakaoLoggingIn || isNaverLoggingIn || isGoogleLoggingIn} // ⭐ isGoogleLoggingIn 추가
+          >
             <img src={googleIcon} alt="구글" className="w-[19px] h-[19px] mr-2" />
             <span className="text-[#111213] text-xs font-bold font-['Noto_Sans_KR']">
-              Google로 로그인
+              {isGoogleLoggingIn ? 'Google 로그인 중...' : 'Google로 로그인'} {/* ⭐ 로딩 텍스트 추가 */}
             </span>
           </button>
           <button
