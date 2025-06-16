@@ -5,6 +5,7 @@ import profileImg2 from '../../assets/character/mewsdoc2.png';
 import profileImg3 from '../../assets/character/mewsdoc3.png';
 import profileImg4 from '../../assets/character/mewsdoc4.png';
 import profileImg5 from '../../assets/character/mewsdoc5.png';
+import profileImg6 from '../../assets/character/mewsdoc5.png';
 import axios from 'axios';
 
 interface Message {
@@ -93,7 +94,7 @@ export default function ChatPage() {
   const [userInfo, setUserInfo] = useState({ nickname: '' });
   const [botMessages, setBotMessages] = useState<Message[]>([]); // 봇 메시지 리스트를 상태로 관리
 
-  const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5];
+  const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5, profileImg6];
 
   function ChatProfile() {
     const savedIndex = localStorage.getItem('profileIndex');
@@ -120,7 +121,7 @@ export default function ChatPage() {
           setUserInfo(res.data);
           // userInfo가 설정된 후에 메시지를 정의하고 표시 시작
           const initialMessages: Message[] = [
-            { id: 1, text: `안냥🐱~ 너만의 앵커 ${res.data.nickname}!`, delay: 500 },
+            { id: 1, text: `안냥🐱~ 나는 너만의 앵커 ${res.data.nickname}이야!`, delay: 500 },
             { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
             { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
             { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
 import Header from '../../components/Header';
 import AttendanceCalendar from '../../components/AttendanceCalendar';
 import CategoryTabs from '../../components/CategoryTabs';
@@ -11,145 +12,139 @@ import profileImg2 from '../../assets/character/mewsdoc2.png';
 import profileImg3 from '../../assets/character/mewsdoc3.png';
 import profileImg4 from '../../assets/character/mewsdoc4.png';
 import profileImg5 from '../../assets/character/mewsdoc5.png';
+import profileImg6 from '../../assets/character/mewsdoc6.png';
 
 import stampIcon from '../../assets/svg/jelly_on.svg';
 
-interface UserAttendanceResponse<T> {
-  success: boolean;
-  message: string;
-  data?: T;
-}
+const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5, profileImg6];
 
 export default function MyPage() {
   const navigate = useNavigate();
+
   const [selectedTab, setSelectedTab] = useState<'attendance' | 'scrap'>('attendance');
   const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
-  const [showPopup, setShowPopup] = useState(false);
   const [userInfo, setUserInfo] = useState({ id: '', nickname: '', email: '' });
+
   const [loadingStamp, setLoadingStamp] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
-
   const [showNicknameEditPopup, setShowNicknameEditPopup] = useState(false);
   const [newNickname, setNewNickname] = useState('');
 
-  const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5];
-  const [selectedProfileIndex, setSelectedProfileIndex] = useState<number>(() => {
+  const [popupMessage, setPopupMessage] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
+
+  const [selectedProfileIndex, setSelectedProfileIndex] = useState(() => {
     const savedIndex = localStorage.getItem('profileIndex');
-    return savedIndex !== null ? parseInt(savedIndex) : 0;
+    return savedIndex ? parseInt(savedIndex) : 0;
   });
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
+  const getTodayString = () => new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      console.error('로그인 정보가 존재하지 않습니다.');
-      return;
-    }
+    const fetchUserData = async () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return console.error('로그인 정보가 존재하지 않습니다.');
 
-    axios
-      .get(`http://localhost:8080/api/user/${userId}`)
-      .then((res) => {
-        setUserInfo(res.data);
-        localStorage.setItem('nickname', res.data.nickname);  // 추가!
-      })
-      .catch((err) => {
-        console.error('사용자 정보 불러오기 실패:', err);
-      });
+      try {
+        const userRes = await axios.get(`http://localhost:8080/api/user/${userId}`);
+        setUserInfo(userRes.data);
+        localStorage.setItem('nickname', userRes.data.nickname);
 
-    axios
-      .get(`http://localhost:8080/api/user/attendance/${userId}`)
-      .then((res: { data: UserAttendanceResponse<string[]> }) => {
-        if (res.data.success && res.data.data) {
-          setAttendanceDates(res.data.data);
+        const attendanceRes = await axios.get(`http://localhost:8080/api/user/attendance/${userId}`);
+        if (attendanceRes.data.success && attendanceRes.data.data) {
+          setAttendanceDates(attendanceRes.data.data);
         } else {
-          console.error('출석 날짜 불러오기 실패:', res.data.message);
+          console.error('출석 날짜 불러오기 실패:', attendanceRes.data.message);
         }
-      })
-      .catch((err) => {
-        console.error('출석 날짜 불러오기 실패:', err);
-      });
-  }, [navigate]);
+      } catch (err) {
+        console.error('데이터 불러오기 실패:', err);
+      }
+    };
 
-  const getTodayString = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
+    fetchUserData();
+  }, []);
 
   const handleStampClick = async () => {
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      alert('로그인이 필요합니다.');
+      setPopupMessage('로그인이 필요합니다.');
+      setShowPopup(true);
       navigate('/login');
       return;
     }
+
     if (loadingStamp) return;
     setLoadingStamp(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/user/attendance', {
+      const res = await fetch('http://localhost:8080/api/user/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        alert(data.message || '출석 도장이 성공적으로 기록되었습니다!');
-        const todayString = getTodayString();
-        if (!attendanceDates.includes(todayString)) {
-          setAttendanceDates((prev) => [...prev, todayString]);
+      const data = await res.json();
+
+      if (res.ok) {
+        const today = getTodayString();
+        if (!attendanceDates.includes(today)) {
+          setAttendanceDates((prev) => [...prev, today]);
+          setPopupMessage(data.message || '출석 도장이 성공적으로 기록되었습니다! 🐾');
+        } else {
+          setPopupMessage('오늘은 이미 출석 도장을 찍었어요! 🐾');
         }
       } else {
-        const errorData = await response.json();
-        alert(`출석 도장 찍기 실패: ${errorData.message}`);
+        setPopupMessage(`출석 실패: ${data.message}`);
       }
     } catch (err) {
-      alert('서버 오류: 출석 도장 찍기에 실패했습니다.');
       console.error(err);
+      setPopupMessage('서버 오류로 출석에 실패했습니다.');
     } finally {
+      setShowPopup(true);
       setLoadingStamp(false);
     }
   };
 
   const handleNicknameEdit = async () => {
     const userId = localStorage.getItem('userId');
-    if (!userId) return;
-    if (!newNickname.trim()) {
-      alert('닉네임을 입력해주세요.');
+    if (!userId || !newNickname.trim()) {
+      setPopupMessage('닉네임을 입력해주세요.');
+      setShowPopup(true);
       return;
     }
 
     try {
-      const response = await axios.post(`http://localhost:8080/api/user/update-nickname`, {
-        id : userId,
+      const res = await axios.post('http://localhost:8080/api/user/update-nickname', {
+        id: userId,
         nickname: newNickname,
       });
 
-      if (response.data.success) {
+      if (res.data.success) {
         setUserInfo((prev) => ({ ...prev, nickname: newNickname }));
-        localStorage.setItem('nickname', newNickname);  // 추가!
+        localStorage.setItem('nickname', newNickname);
         setShowNicknameEditPopup(false);
       } else {
-        alert('닉네임 변경 실패: ' + response.data.message);
+        setPopupMessage('닉네임 변경 실패: ' + res.data.message);
+        setShowPopup(true);
       }
     } catch (err) {
       console.error('닉네임 변경 오류:', err);
-      alert('서버 오류로 닉네임 변경에 실패했습니다.');
+      setPopupMessage('서버 오류로 닉네임 변경에 실패했습니다.');
+      setShowPopup(true);
     }
   };
 
   return (
     <div className="w-full h-screen flex justify-center bg-gray-100">
-      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white relative">
+      <div className="w-full max-w-md h-full flex flex-col bg-white border shadow-sm rounded relative">
         <Header title="마이페이지" onBack={handleBack} />
 
-        <div className="w-[335px] h-[172px] relative mx-auto mt-4">
-          <div className="absolute top-0 left-[11px] w-[313px] h-[60px] relative">
-            <div className="flex flex-col items-start gap-1 max-w-[201px]">
-              <div className="w-full text-base font-bold text-[#191d23] flex items-center gap-2">
+        {/* 유저 정보 영역 */}
+        <div className="relative w-[335px] h-[172px] mx-auto mt-4">
+          <div className="absolute top-0 left-[11px] w-[313px] h-[60px] flex justify-between items-start">
+            <div className="flex flex-col gap-1">
+              <div className="text-base font-bold flex items-center gap-2">
                 {userInfo.nickname}
                 <button
                   className="text-xs text-purple-600 underline"
@@ -161,16 +156,14 @@ export default function MyPage() {
                   수정
                 </button>
               </div>
-              <div className="inline-block px-2.5 py-0.5 bg-emerald-50 rounded max-w-full">
-                <div className="text-sm text-[#090a0a] max-w-full truncate" title={userInfo.email}>
-                  @{userInfo.email}
-                </div>
+              <div className="px-2.5 py-0.5 bg-emerald-50 rounded text-sm text-[#090a0a] truncate max-w-[200px]">
+                @{userInfo.email}
               </div>
             </div>
             <img
-              className="w-[60px] h-[60px] absolute top-0 right-0"
               src={profileImages[selectedProfileIndex]}
               alt="프로필"
+              className="w-[60px] h-[60px]"
             />
           </div>
 
@@ -188,48 +181,64 @@ export default function MyPage() {
             </div>
           </div>
 
-          <div className="absolute top-[75px] left-[14px] inline-flex items-center gap-[17px]">
+          {/* 버튼 */}
+          <div className="absolute top-[75px] left-[14px] flex gap-[17px]">
             <button
-              type="button"
               className={`w-[153px] px-4 py-2.5 bg-white rounded-lg shadow outline outline-1 outline-[#cfd4dc] flex items-center gap-2 ${
                 loadingStamp ? 'cursor-not-allowed opacity-70' : ''
               }`}
               onClick={handleStampClick}
               disabled={loadingStamp}
             >
-              <img className="w-[19px] h-[18px]" src={stampIcon} alt="출석 도장 아이콘" />
-              <span className="text-sm text-[#344053] font-medium">
-                {loadingStamp ? '처리 중...' : '출석도장 찍기'}
-              </span>
+              <img src={stampIcon} alt="도장" className="w-[19px] h-[18px]" />
+              <span className="text-sm font-medium">{loadingStamp ? '처리 중...' : '출석도장 찍기'}</span>
             </button>
-
             <button
-              type="button"
-              className="w-[142px] px-4 py-2.5 bg-[#7e56d8] rounded-lg shadow outline outline-1 outline-[#7e56d8] flex items-center justify-center"
+              className="w-[142px] px-4 py-2.5 bg-[#7e56d8] text-white rounded-lg shadow"
               onClick={() => setShowProfilePopup(true)}
             >
-              <span className="text-sm text-white font-medium">프로필 바꾸기</span>
+              프로필 바꾸기
             </button>
           </div>
         </div>
 
-        <div className="mt-20 px-4 max-w-md mx-auto">
-          <CategoryTabs selected={selectedTab} onSelect={(tab) => setSelectedTab(tab)} />
+        {/* 탭 및 콘텐츠 */}
+        <div className="mt-20 px-4">
+          <CategoryTabs selected={selectedTab} onSelect={setSelectedTab} />
+        </div>
+        <div className="px-4 flex-grow overflow-auto">
+          {selectedTab === 'attendance' ? (
+            <AttendanceCalendar attendanceDates={attendanceDates} />
+          ) : (
+            <ScrapNews />
+          )}
         </div>
 
-        <div className="px-4 mt-0 flex-grow overflow-auto">
-          {selectedTab === 'attendance' && <AttendanceCalendar attendanceDates={attendanceDates} />}
-          {selectedTab === 'scrap' && <ScrapNews />}
-        </div>
-
-        {showPopup && (
+        {/* 프로필 변경 팝업 */}
+        {showProfilePopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white rounded-xl p-7 w-80 text-center shadow-lg font-medium">
-              <div className="mb-4 text-lg text-black">오늘은 이미 출석 도장을 찍었어요! 🐾</div>
+            <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg">
+              <h3 className="text-lg font-semibold mb-4">프로필을 선택하세요</h3>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                {profileImages.map((img, index) => (
+                  <div
+                    key={index}
+                    className={`w-24 h-24 border-4 flex items-center justify-center cursor-pointer overflow-hidden ${
+                      selectedProfileIndex === index ? 'border-purple-500' : 'border-transparent'
+                    }`}
+                    onClick={() => {
+                      setSelectedProfileIndex(index);
+                      localStorage.setItem('profileIndex', String(index));
+                      setShowProfilePopup(false);
+                    }}
+                  >
+                    <img src={img} alt={`프로필 ${index + 1}`} className="object-contain w-full h-full" />
+                  </div>
+                ))}
+              </div>
               <button
-                onClick={() => setShowPopup(false)}
-                className="mt-2 px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
-                style={{ backgroundColor: '#7F56D9', color: 'white' }}
+                onClick={() => setShowProfilePopup(false)}
+                className="mt-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm"
               >
                 닫기
               </button>
@@ -237,45 +246,10 @@ export default function MyPage() {
           </div>
         )}
 
-{showProfilePopup && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-    <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg font-medium">
-      <h3 className="text-lg font-semibold mb-4">프로필을 선택하세요</h3>
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        {profileImages.map((img, index) => (
-          <div
-            key={index}
-            className={`w-24 h-24 border-4 cursor-pointer flex items-center justify-center overflow-hidden ${
-              selectedProfileIndex === index ? 'border-purple-500' : 'border-transparent'
-            }`}
-            onClick={() => {
-              setSelectedProfileIndex(index);
-              localStorage.setItem('profileIndex', String(index));
-              setShowProfilePopup(false);
-            }}
-          >
-            <img
-              src={img}
-              alt={`프로필 ${index + 1}`}
-              className="object-contain w-full h-full"
-            />
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={() => setShowProfilePopup(false)}
-        className="mt-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm"
-      >
-        닫기
-      </button>
-    </div>
-  </div>
-)}
-
-
+        {/* 닉네임 수정 팝업 */}
         {showNicknameEditPopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg font-medium">
+            <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg">
               <h3 className="text-lg font-semibold mb-4">닉네임 수정</h3>
               <input
                 type="text"
@@ -297,6 +271,25 @@ export default function MyPage() {
                   확인
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 커스텀 팝업 */}
+        {showPopup && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+            <div
+              className="bg-white rounded-xl p-7 w-80 text-center shadow-lg font-medium"
+              style={{ fontFamily: 'Pretendard, sans-serif' }}
+            >
+              <div className="mb-4 text-lg text-black">{popupMessage}</div>
+              <button
+                onClick={() => setShowPopup(false)}
+                className="mt-2 px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                style={{ backgroundColor: '#7F56D9', color: 'white' }}
+              >
+                닫기
+              </button>
             </div>
           </div>
         )}
