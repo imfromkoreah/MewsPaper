@@ -5,37 +5,12 @@ import profileImg2 from '../../assets/character/mewsdoc2.png';
 import profileImg3 from '../../assets/character/mewsdoc3.png';
 import profileImg4 from '../../assets/character/mewsdoc4.png';
 import profileImg5 from '../../assets/character/mewsdoc5.png';
+import axios from 'axios';
 
 interface Message {
   id: number;
   text: string;
   delay: number;
-}
-
-// 🐱 메시지 리스트
-const messages: Message[] = [
-  { id: 1, text: '안냥🐱~ 너만의 앵커 냥냥박사야!', delay: 500 },
-  { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
-  { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
-  { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
-];
-
-const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5];
-
-function ChatProfile() {
-  const savedIndex = localStorage.getItem('profileIndex');
-  const profileIndex = savedIndex !== null ? parseInt(savedIndex) : 0;
-  const selectedProfile = profileImages[profileIndex];
-
-  return (
-    <>
-      <div className="absolute left-[51px] top-[2px] text-black text-[13px] font-bold font-['Noto_Sans_KR'] z-10">
-        냥냥박사
-      </div>
-      <div className="w-10 h-10 bg-blue-50 rounded-full absolute left-[4px] top-[4px] z-10" />
-      <img className="w-12 h-12 absolute left-0 top-0 z-10" src={selectedProfile} alt="냥냥박사 프로필" />
-    </>
-  );
 }
 
 // 🐱 한 개의 봇 말풍선 메시지를 그리는 컴포넌트
@@ -115,30 +90,92 @@ export default function ChatPage() {
   const [messageTops, setMessageTops] = useState<number[]>([]);
   const [userMessageTops, setUserMessageTops] = useState<number[]>([]);
 
+  const [userInfo, setUserInfo] = useState({ nickname: '' });
+  const [botMessages, setBotMessages] = useState<Message[]>([]); // 봇 메시지 리스트를 상태로 관리
+
+  const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5];
+
+  function ChatProfile() {
+    const savedIndex = localStorage.getItem('profileIndex');
+    const profileIndex = savedIndex !== null ? parseInt(savedIndex) : 0;
+    const selectedProfile = profileImages[profileIndex];
+
+    return (
+      <>
+        <div className="absolute left-[51px] top-[2px] text-black text-[13px] font-bold font-['Noto_Sans_KR'] z-10">
+          {userInfo.nickname}
+        </div>
+        <div className="w-10 h-10 bg-blue-50 rounded-full absolute left-[4px] top-[4px] z-10" />
+        <img className="w-12 h-12 absolute left-0 top-0 z-10" src={selectedProfile} alt="프로필" />
+      </>
+    );
+  }
+
   useEffect(() => {
-    const showMessages = async () => {
-      for (let i = 0; i < messages.length; i++) {
+    const userId = localStorage.getItem('userId');
+    if (userId) { // userId가 있을 때만 API 호출
+      axios
+        .get(`http://localhost:8080/api/user/${userId}`)
+        .then((res) => {
+          setUserInfo(res.data);
+          // userInfo가 설정된 후에 메시지를 정의하고 표시 시작
+          const initialMessages: Message[] = [
+            { id: 1, text: `안냥🐱~ 너만의 앵커 ${res.data.nickname}!`, delay: 500 },
+            { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
+            { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
+            { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
+          ];
+          setBotMessages(initialMessages); // 상태로 메시지 설정
+          showMessages(initialMessages); // 메시지 표시 시작
+        })
+        .catch((err) => {
+          console.error('사용자 정보 불러오기 실패:', err);
+          // 오류 발생 시에도 기본 메시지 표시 또는 다른 처리
+          const defaultMessages: Message[] = [
+            { id: 1, text: `안냥🐱~ 너만의 앵커!`, delay: 500 },
+            { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
+            { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
+            { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
+          ];
+          setBotMessages(defaultMessages);
+          showMessages(defaultMessages);
+        });
+    } else {
+        // userId가 없을 경우 바로 기본 메시지 표시
+        const defaultMessages: Message[] = [
+            { id: 1, text: `안냥🐱~ 너만의 앵커!`, delay: 500 },
+            { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
+            { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
+            { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
+        ];
+        setBotMessages(defaultMessages);
+        showMessages(defaultMessages);
+    }
+
+    // showMessages 함수를 useEffect 밖으로 빼내어 인자로 메시지 배열을 받도록 수정
+    const showMessages = async (msgs: Message[]) => {
+      for (let i = 0; i < msgs.length; i++) {
         setActiveIndex(i);
-        await new Promise((r) => setTimeout(r, messages[i].delay));
-        setVisibleMessages((prev) => [...prev, messages[i].id]);
+        await new Promise((r) => setTimeout(r, msgs[i].delay));
+        setVisibleMessages((prev) => [...prev, msgs[i].id]);
       }
       setInputVisible(true);
     };
-    showMessages();
-  }, []);
+
+  }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
 
   useLayoutEffect(() => {
-    messageRefs.current = messageRefs.current.slice(0, messages.length);
+    messageRefs.current = messageRefs.current.slice(0, botMessages.length); // messages -> botMessages
     let accHeight = 0;
     const gap = 10;
-    const tops = messages.map((_, i) => {
+    const tops = botMessages.map((_, i) => { // messages -> botMessages
       const el = messageRefs.current[i];
       const top = accHeight;
       accHeight += (el?.offsetHeight ?? 40) + gap;
       return top;
     });
     setMessageTops(tops);
-  }, [visibleMessages, textSize]);
+  }, [visibleMessages, textSize, botMessages]); // botMessages를 의존성 배열에 추가
 
   useLayoutEffect(() => {
     userMessageRefs.current = userMessageRefs.current.slice(0, userMessages.length);
@@ -158,7 +195,7 @@ export default function ChatPage() {
       <div className="w-[365px] min-h-[300px] relative pb-20 mt-2">
         <ChatProfile />
 
-        {messages.map((msg, idx) => {
+        {botMessages.map((msg, idx) => { // messages -> botMessages
           const isActive = idx === activeIndex;
           const isVisible = visibleMessages.includes(msg.id);
           return isVisible || isActive ? (

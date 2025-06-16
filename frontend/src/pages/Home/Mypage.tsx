@@ -123,7 +123,8 @@ export default function MyPage() {
     }
 
     try {
-      const response = await axios.put(`http://localhost:8080/api/user/${userId}/nickname`, {
+      const response = await axios.post(`http://localhost:8080/api/user/update-nickname`, {
+        id : userId,
         nickname: newNickname,
       });
 

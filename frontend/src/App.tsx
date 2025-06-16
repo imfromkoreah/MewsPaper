@@ -28,7 +28,7 @@ import GoogleCallback from './pages/Auth/GoogleCallback'; // <-- 이 줄이 중�
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/onboarding" />} />
+      <Route path="/" element={<Navigate to="/Splash" />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/splash" element={<Splash />} />
       <Route path="/join" element={<Join />} />
