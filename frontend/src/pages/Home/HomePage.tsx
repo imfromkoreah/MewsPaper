@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-import anchorImg from '../../assets/character/anchor.png';
+import anchorImg1 from '../../assets/character/mews_anchor.png';
+import anchorImg2 from '../../assets/character/mews_anchor2.png';
+import anchorImg3 from '../../assets/character/mews_anchor3.png';
+import anchorImg4 from '../../assets/character/mews_anchor4.png';
+import anchorImg5 from '../../assets/character/mews_anchor5.png';
+import anchorImg6 from '../../assets/character/mews_anchor6.png';
+
 import JellyOff from '../../assets/svg/jelly_off.svg';
 import JellyOn from '../../assets/svg/jelly_on.svg';
 import Message from '../../assets/svg/message.svg';
@@ -12,6 +18,23 @@ import Week from '../../assets/svg/week.svg';
 const HomePage = () => {
   const navigate = useNavigate();
   const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
+
+  // 1. 프로필 이미지 배열
+  const profileImages = [anchorImg1, anchorImg2, anchorImg3, anchorImg4, anchorImg5, anchorImg6];
+
+  // 2. 프로필 인덱스 상태
+  const [profileIndex, setProfileIndex] = useState(0);
+
+  // 3. localStorage에서 profileIndex 불러오기
+  useEffect(() => {
+    const savedIndex = localStorage.getItem('profileIndex');
+    if (savedIndex !== null) {
+      const idx = parseInt(savedIndex);
+      if (!isNaN(idx) && idx >= 0 && idx < profileImages.length) {
+        setProfileIndex(idx);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -106,20 +129,20 @@ const HomePage = () => {
       {/* 이미지 설명 영역 */}
       <div className="w-[321px] h-[300px] relative">
         <img
-          className="absolute left-1/2 top-0 -translate-x-1/2 w-[250px] h-auto"
-          src={anchorImg}
+          className="absolute left-1/2 top-0 -translate-x-1/2 w-[210px] h-auto"
+          src={profileImages[profileIndex]} // 저장된 인덱스에 따른 이미지
           alt="대표 이미지"
         />
-        <div className="left-[245px] top-[142px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
+        <div className="left-[260px] top-[142px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
           탄핵 심판의 갈림길
         </div>
-        <div className="left-0 top-[90px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
-          트럼프 대통령 <br />경제 관련 어쩌구
+        <div className="left-[0px] top-[90px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
+          트럼프 대통령 <br />경제 정책
         </div>
-        <div className="left-[235px] top-[62px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
+        <div className="left-[255px] top-[62px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
           현대차에서 <br />전기차 최초공개
         </div>
-        <div className="absolute left-1/2 top-[340px] transform -translate-x-1/2 text-center text-[#666666] text-sm font-medium">
+        <div className="absolute left-1/2 top-[330px] transform -translate-x-1/2 text-center text-[#666666] text-sm font-medium">
           Level 1
         </div>
       </div>
