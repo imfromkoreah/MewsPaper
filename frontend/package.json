@@ -15,7 +15,8 @@
     "react-dom": "^19.1.0",
     "react-pageflip": "^2.0.3",
     "react-router-dom": "^7.6.0",
-    "styled-components": "^6.1.18"
+    "styled-components": "^6.1.18",
+    "swiper": "^11.2.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

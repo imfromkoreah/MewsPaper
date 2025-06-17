@@ -9,6 +9,7 @@ import AttendanceCalendar from './components/AttendanceCalendar';
 import ScrapNews from './components/ScrapNews';
 
 import HomePage from './pages/Home';
+import LetterPage from './pages/Home/LetterPage';
 import NewsPage from './pages/Home/NewsPage';
 import NewsDetailPage from './pages/Home/NewsDetailPage';
 import ChatPage from './pages/Home/ChatPage';
@@ -36,6 +37,7 @@ function App() {
       <Route path="/noti" element={<NotificationPage />} />
       <Route path="/news/detail" element={<NewsDetailPage />} />
       <Route path="/home/mypage" element={<MyPage />} />
+      <Route path="/home/news-letter" element={<LetterPage />} />
       <Route path="/calendar" element={<Calendar />} />
       <Route path="/attendanceCalendar" element={<AttendanceCalendar />} />
       <Route path="/scrap-news" element={<ScrapNews />} />
