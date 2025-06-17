@@ -86,7 +86,10 @@ const HomePage = () => {
           type="button"
           className="w-[150px] left-[81px] top-[143px] absolute flex items-center space-x-2 cursor-pointer
                     focus:outline-none active:scale-95 transition-transform duration-150"
-          onClick={() => console.log('뉴스레터 영역 클릭됨')}
+          onClick={() => {
+            console.log('뉴스레터 영역 클릭됨');
+            navigate('/home/news-letter');
+          }}
         >
           <img src={Message} alt="message" className="w-[15px] h-[10px]" />
           <div className="flex space-x-1">
@@ -107,7 +110,7 @@ const HomePage = () => {
           src={anchorImg}
           alt="대표 이미지"
         />
-        <div className="left-[233px] top-[142px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
+        <div className="left-[245px] top-[142px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
           탄핵 심판의 갈림길
         </div>
         <div className="left-0 top-[90px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">

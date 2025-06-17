@@ -38,22 +38,29 @@ export default function LetterPage() {
     },
   ];
 
-  // 가로 캐러셀 슬라이더 적용
+  const swiperMarginTop = "mt-16";  // 카드(슬라이더) 위 여백
+
   return (
     <div className="w-full h-screen flex justify-center bg-gray-100">
       <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white">
+
+        {/* Header */}
         <Header title="나만의 뉴스레터" onBack={handleBack} />
 
-        <div className="flex-1 flex flex-col items-center justify-center -mt-20">
-          {/* 카드 위 텍스트 */}
-          <div className="w-[327px] text-center text-[#090a0a] text-2xl font-bold font-['Inter'] leading-loose mb-4">
+        {/* 타이틀 부분을 감싸는 div */}
+        <div className="flex justify-center items-center" style={{ height: '80px' }}>
+          <div className="w-[327px] text-center text-[#090a0a] text-2xl font-bold font-['Inter'] leading-loose mt-24">
             6월 11일 브리핑
           </div>
+        </div>
 
+        {/* 슬라이더 감싸는 div - mt-20 추가 */}
+        <div className={`${swiperMarginTop} flex-1 flex flex-col items-center`}>
           <Swiper
-            spaceBetween={8}
+            spaceBetween={28}
             slidesPerView={1.25}
             centeredSlides
+            initialSlide={2}
             className="w-full px-1"
           >
             {cards.map((card, index) => (
@@ -86,8 +93,8 @@ export default function LetterPage() {
             ))}
           </Swiper>
 
-          {/* 카드 아래 안내 텍스트 */}
-          <div className="mt-4 text-center text-[#090a0a] text-base">
+          {/* 안내 텍스트 */}
+          <div className="text-center text-[#090a0a] text-base mt-10">
             좌우로 밀어서 넘겨보세요!
           </div>
         </div>
