@@ -40,7 +40,7 @@ export default function LetterPage() {
 
   return (
     <div className="w-full h-screen flex justify-center bg-gray-100">
-      <div className="w-[375px] h-[812px] bg-white rounded-[32px] overflow-hidden shadow-lg flex flex-col">
+      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white">
         <Header title="나만의 뉴스레터" onBack={handleBack} />
 
         <div className="flex-1 flex flex-col items-center justify-center -mt-20">
@@ -49,36 +49,43 @@ export default function LetterPage() {
             6월 11일 브리핑
           </div>
 
-          <Swiper
-            spaceBetween={20}
-            slidesPerView={1.15}
-            centeredSlides
-            className="w-full px-2"
-          >
-            {cards.map((card, index) => (
-              <SwiperSlide key={index}>
-                <div className="w-[311px] h-[420px] relative bg-[#e3e5e5] rounded-2xl mx-auto px-4 pt-6 flex flex-col">
-                  <img
-                    className="w-[257px] h-[130px] mx-auto mb-4"
-                    src={card.img}
-                    alt="뉴스 이미지"
-                  />
-                  <div className="text-center text-[#090a0a] text-sm font-bold mb-2">
-                    {card.title}
-                  </div>
-                  <div className="text-center text-[#090a0a] text-sm leading-tight flex-grow mb-6">
-                    {card.body}
-                  </div>
-                  <div
-                    className="w-[263px] h-12 bg-[#6a4dff] rounded-[48px] flex items-center justify-center text-white text-base font-medium mx-auto"
-                    style={{ position: 'absolute', top: '330px', left: '50%', transform: 'translateX(-50%)' }}
-                  >
-                    스크랩하기
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+<Swiper
+  spaceBetween={8}
+  slidesPerView={1.25}
+  centeredSlides
+  className="w-full px-1"
+>
+  {cards.map((card, index) => (
+    <SwiperSlide key={index}>
+      <div className="w-[320px] h-[420px] relative bg-[#e3e5e5] rounded-2xl mx-auto px-4 pt-6 flex flex-col">
+        <img
+          className="w-[257px] h-[130px] mx-auto mb-4"
+          src={card.img}
+          alt="뉴스 이미지"
+        />
+        <div className="text-center text-[#090a0a] text-sm font-bold mb-2">
+          {card.title}
+        </div>
+        <div className="text-center text-[#090a0a] text-sm leading-tight flex-grow mb-6">
+          {card.body}
+        </div>
+        <div
+          className="w-[263px] h-12 bg-[#6a4dff] rounded-[48px] flex items-center justify-center text-white text-base font-medium mx-auto"
+          style={{
+            position: 'absolute',
+            top: '330px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+          }}
+        >
+          스크랩하기
+        </div>
+      </div>
+    </SwiperSlide>
+  ))}
+</Swiper>
+
+
 
           {/* 카드 아래 안내 텍스트 */}
           <div className="mt-4 text-center text-[#090a0a] text-base">
