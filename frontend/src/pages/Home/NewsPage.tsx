@@ -99,13 +99,13 @@ export default function News() {
       </div>
 
       {/* 본문 영역 */}
-      <div className="relative mt-[60px] w-[480px] h-[500px]">
+      <div className="relative mt-[60px] w-[400px] h-[470px]">
         <img
           src={Paper}
           alt="신문 배경"
           className="w-full h-full absolute top-0 left-0 z-0 object-cover"
         />
-        <div className="absolute top-[0px] left-[53px] w-[8px] h-[493px] bg-[#D4D4D4]/70 z-30" />
+        {/* <div className="absolute top-[0px] left-[25px] w-[8px] h-[466px] bg-[#D4D4D4]/70 z-30" /> */}
 
         {articles.length === 0 ? (
           <div className="flex justify-center items-center w-full h-full text-gray-500 font-semibold z-20 relative">
@@ -115,8 +115,8 @@ export default function News() {
           <HTMLFlipBook
             key={flipKey} // 🔑 key 변경으로 완전 새로 렌더링
             ref={flipBookRef}
-            width={370}
-            height={490}
+            width={340}
+            height={465}
             className="relative z-20 overflow-hidden"
             showCover={false}
             size="fixed"
@@ -125,7 +125,7 @@ export default function News() {
             style={{
               boxSizing: 'border-box',
               backgroundColor: 'transparent',
-              marginTop: '-70px',
+              marginTop: '-40px',
             }}
           >
             {articles.map((article, index) => (
