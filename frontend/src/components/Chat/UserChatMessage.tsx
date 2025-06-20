@@ -1,4 +1,4 @@
-// 사용자 메시지 컴포넌트 
+// 유저 메시지 컴포넌트 
 import { forwardRef } from 'react';
 
 interface UserChatMessageProps {
