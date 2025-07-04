@@ -1,16 +1,19 @@
-interface InputBoxProps {
+// components/ChatInput.tsx
+import { useState } from 'react';
+
+interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
 }
 
-export default function InputBox({ value, onChange, onSend }: InputBoxProps) {
+export default function ChatInput({ value, onChange, onSend }: ChatInputProps) {
   const disabled = !value.trim();
 
   return (
     <div
-      className="fixed left-1/2 transform -translate-x-1/2 w-[370px] flex items-center space-x-2"
-      style={{ bottom: 70, zIndex: 20 }}
+      className="fixed left-1/2 transform -translate-x-1/2 w-full max-w-md flex items-center space-x-2 px-4"
+      style={{ bottom: 56 + 14, zIndex: 25 }} // BottomNav 높이 56px + 여유 공간
     >
       <div className="flex-1 h-12 bg-[#e3e4e5] rounded-full relative">
         <input

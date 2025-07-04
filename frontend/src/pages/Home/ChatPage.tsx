@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, forwardRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
 import profileImg1 from '../../assets/character/mewsdoc.png';
@@ -16,7 +16,7 @@ interface ChatMessageItem {
   delay?: number;
   isVisible?: boolean;
   isLoading?: boolean;
-  showProfileBefore?: boolean; 
+  showProfileBefore?: boolean;
 }
 
 interface ChatMessageProps {
@@ -25,32 +25,35 @@ interface ChatMessageProps {
   isLoading: boolean;
   textSize: string;
   isBotMessage: boolean;
-  className?: string; 
+  className?: string;
 }
 
-const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
-  ({ text, isVisible, isLoading, textSize, isBotMessage, className }, ref) => (
-    <div
-      ref={ref}
-      className={`max-w-[260px] px-4 py-2.5 inline-flex items-center gap-2.5 overflow-hidden ${
-        isBotMessage
-          ? 'bg-[#f1f1f1] text-[#1c283b] rounded-tr-[20px] rounded-bl-[20px] rounded-br-[20px]'
-          : 'bg-[#6B4EFF] text-white rounded-tl-[20px] rounded-tr-[20px] rounded-bl-[20px]'
-      } ${isLoading ? 'h-10' : 'min-h-[40px]'} ${className || ''}`}
-    >
-      {isVisible ? (
-        <div
-          className={`text-base font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}
-        >
-          {text}
-        </div>
-      ) : isLoading ? (
-        <LoadingDots />
-      ) : null}
-    </div>
-  )
+const ChatMessage = ({
+  text,
+  isVisible,
+  isLoading,
+  textSize,
+  isBotMessage,
+  className,
+}: ChatMessageProps) => (
+  <div
+    className={`max-w-[260px] px-4 py-2.5 inline-flex items-center gap-2.5 overflow-hidden ${
+      isBotMessage
+        ? 'bg-[#f1f1f1] text-[#1c283b] rounded-tr-[20px] rounded-bl-[20px] rounded-br-[20px]'
+        : 'bg-[#6B4EFF] text-white rounded-tl-[20px] rounded-tr-[20px] rounded-bl-[20px]'
+    } ${isLoading ? 'h-10' : 'min-h-[40px]'} ${className || ''}`}
+  >
+    {isVisible ? (
+      <div
+        className={`text-base font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}
+      >
+        {text}
+      </div>
+    ) : isLoading ? (
+      <LoadingDots />
+    ) : null}
+  </div>
 );
-ChatMessage.displayName = 'ChatMessage';
 
 function LoadingDots() {
   return (
@@ -88,10 +91,9 @@ const ChatPage = () => {
   const [textSize] = useState('text-base');
   const [showConfirmationButtons, setShowConfirmationButtons] = useState(false);
 
-  const allMessageRefs = useRef<(HTMLDivElement | null)[]>([]);
-
   const [userInfo, setUserInfo] = useState({ nickname: '' });
   const isInitialLoadCompleted = useRef(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const profileImages = [profileImg1, profileImg2, profileImg3, profileImg4, profileImg5, profileImg6];
   const savedIndex = localStorage.getItem('profileIndex');
@@ -99,150 +101,104 @@ const ChatPage = () => {
   const selectedProfile = profileImages[profileIndex];
 
   useEffect(() => {
-    if (isInitialLoadCompleted.current) {
-      return;
-    }
+    if (isInitialLoadCompleted.current) return;
     isInitialLoadCompleted.current = true;
 
     const userId = localStorage.getItem('userId');
 
-    const addInitialMessagesSequentially = async (msgs: { id: number; text: string; delay: number }[]) => {
-      let currentMsgIdx = 0; 
+    // 로딩 상태 유지 시간 (ms)
+    const LOADING_DURATION = 600;
+    // 텍스트 노출 후 다음 메시지 전 대기 시간 (ms)
+    const BETWEEN_MESSAGES_DELAY = 200;
 
+    const addInitialMessagesSequentially = async (msgs: { id: number; text: string; delay?: number }[]) => {
+      let currentMsgIdx = 0;
       for (const msg of msgs) {
-        const loadingMessageId = Date.now() + currentMsgIdx * 2; 
-        setChatHistory((prev) => {
-          const isFirstMessageInSequence = currentMsgIdx === 0;
-          return [
-            ...prev,
-            {
-              id: loadingMessageId,
-              sender: 'bot',
-              type: 'loading',
-              isLoading: true,
-              isVisible: false,
-              showProfileBefore: isFirstMessageInSequence, 
-            },
-          ];
-        });
+        const loadingMessageId = Date.now() + currentMsgIdx * 2;
+        // 1) 로딩 메시지 추가
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            id: loadingMessageId,
+            sender: 'bot',
+            type: 'loading',
+            isLoading: true,
+            isVisible: false,
+            showProfileBefore: currentMsgIdx === 0,
+          },
+        ]);
 
-        await new Promise((resolve) => setTimeout(resolve, msg.delay / 2 || 500));
+        await new Promise((r) => setTimeout(r, LOADING_DURATION));
 
-        const textMessageId = Date.now() + currentMsgIdx * 2 + 1; 
-        setChatHistory((prev) => {
-          const updatedHistory = prev.filter((m) => m.id !== loadingMessageId);
-          const prevLoadingMsg = prev.find((m) => m.id === loadingMessageId);
-          return [
-            ...updatedHistory,
-            {
-              id: textMessageId,
-              sender: 'bot',
-              type: 'text',
-              text: msg.text,
-              isVisible: true,
-              isLoading: false,
-              showProfileBefore: prevLoadingMsg?.showProfileBefore, 
-            },
-          ];
-        });
+        const textMessageId = Date.now() + currentMsgIdx * 2 + 1;
+        // 2) 로딩 메시지 삭제 후 텍스트 메시지 추가
+        setChatHistory((prev) =>
+          [...prev.filter((m) => m.id !== loadingMessageId),
+          {
+            id: textMessageId,
+            sender: 'bot',
+            type: 'text',
+            text: msg.text,
+            isVisible: true,
+            isLoading: false,
+            showProfileBefore: currentMsgIdx === 0,
+          }]
+        );
 
-        await new Promise((resolve) => setTimeout(resolve, msg.delay / 2 || 500));
-        currentMsgIdx++; 
+        await new Promise((r) => setTimeout(r, BETWEEN_MESSAGES_DELAY));
+
+        currentMsgIdx++;
       }
       setInputVisible(true);
     };
 
     if (userId) {
-      axios
-        .get(`http://localhost:8080/api/user/${userId}`)
+      axios.get(`http://localhost:8080/api/user/${userId}`)
         .then((res) => {
           setUserInfo(res.data);
           const initialMessages = [
-            { id: 1, text: `안냥🐱~ 나는 너만의 앵커 ${res.data.nickname}이야!`, delay: 1000 },
-            { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
-            { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
-            { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
+            { id: 1, text: `안냥🐱~ 나는 너만의 앵커 ${res.data.nickname}이야!` },
+            { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야' },
+            { id: 3, text: '궁금한 뉴스가 있다면...' },
+            { id: 4, text: '나에게 말을 걸어줘!' },
           ];
           addInitialMessagesSequentially(initialMessages);
         })
-        .catch((error) => {
-          console.error("Failed to fetch user info, using fallback messages:", error);
+        .catch(() => {
           const fallback = [
-            { id: 1, text: `안냥🐱~ 너만의 앵커!`, delay: 1000 },
-            { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야', delay: 1000 },
-            { id: 3, text: '궁금한 뉴스가 있다면...', delay: 1000 },
-            { id: 4, text: '나에게 말을 걸어줘!', delay: 1000 },
+            { id: 1, text: `안냥🐱~ 너만의 앵커!` },
+            { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야' },
+            { id: 3, text: '궁금한 뉴스가 있다면...' },
+            { id: 4, text: '나에게 말을 걸어줘!' },
           ];
           addInitialMessagesSequentially(fallback);
         });
-    } else {
-      setInputVisible(false);
     }
   }, []);
 
-  function onConfirmReply(reply: string) {
-    const userConfirmMessage: ChatMessageItem = {
-      id: Date.now(),
-      sender: 'user',
-      type: 'text',
-      text: reply,
-    };
-    setChatHistory((prev) => [...prev, userConfirmMessage]);
-    setShowConfirmationButtons(false); 
-
-    const loadingBotMessage: ChatMessageItem = {
-      id: Date.now() + 1,
-      sender: 'bot',
-      type: 'loading',
-      isLoading: true,
-      isVisible: false,
-      showProfileBefore: true, 
-    };
-    setChatHistory((prev) => [...prev, loadingBotMessage]);
-
-    setTimeout(() => {
-      let botResponseText = '';
-      let shouldActivateInput = false;
-
-      if (reply === '응!') {
-        botResponseText = '좋아! 관련 뉴스를 찾아줄게. 잠시만 기다려 줘!';
-        shouldActivateInput = false; 
-      } else if (reply === '아니야') {
-        botResponseText = '아니구나! 다시 정확한 키워드를 입력해 줄래?';
-        shouldActivateInput = true; 
-      }
-
-      setChatHistory((prev) =>
-        prev.map((msg) =>
-          msg.id === loadingBotMessage.id
-            ? {
-                ...msg,
-                type: 'text',
-                text: botResponseText,
-                isLoading: false,
-                isVisible: true,
-                showProfileBefore: loadingBotMessage.showProfileBefore, 
-              }
-            : msg
-        )
-      );
-      setInputVisible(shouldActivateInput); 
-    }, 1500);
-  }
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const timeout = setTimeout(() => {
+      scrollRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest',
+      });
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [chatHistory]);
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
-
     const newUserMessage: ChatMessageItem = {
       id: Date.now(),
       sender: 'user',
       type: 'text',
       text: inputText,
     };
-
     setChatHistory((prev) => [...prev, newUserMessage]);
     setInputText('');
-    setInputVisible(false); 
+    setInputVisible(false);
 
     const loadingBotMessage: ChatMessageItem = {
       id: Date.now() + 1,
@@ -250,7 +206,7 @@ const ChatPage = () => {
       type: 'loading',
       isLoading: true,
       isVisible: false,
-      showProfileBefore: true, 
+      showProfileBefore: true,
     };
     setChatHistory((prev) => [...prev, loadingBotMessage]);
 
@@ -264,31 +220,57 @@ const ChatPage = () => {
                 text: `입력한 검색어가 "${newUserMessage.text}" 맞아?`,
                 isLoading: false,
                 isVisible: true,
-                showProfileBefore: loadingBotMessage.showProfileBefore, 
               }
             : msg
         )
       );
-      setShowConfirmationButtons(true); 
+      setShowConfirmationButtons(true);
     }, 1500);
   };
 
-  // 스크롤 로직 수정
-  useEffect(() => {
-    const lastMsgEl = allMessageRefs.current[chatHistory.length - 1];
-    if (lastMsgEl) {
-      // setTimeout을 사용하여 DOM 렌더링 후 스크롤이 실행되도록 합니다.
-      const timer = setTimeout(() => {
-        lastMsgEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }, 100); // 100ms 정도의 지연 시간
+  const onConfirmReply = (reply: string) => {
+    const userConfirmMessage: ChatMessageItem = {
+      id: Date.now(),
+      sender: 'user',
+      type: 'text',
+      text: reply,
+    };
+    setChatHistory((prev) => [...prev, userConfirmMessage]);
+    setShowConfirmationButtons(false);
 
-      return () => clearTimeout(timer); // 컴포넌트 언마운트 시 타이머 정리
-    }
-  }, [chatHistory]);
+    const loadingBotMessage: ChatMessageItem = {
+      id: Date.now() + 1,
+      sender: 'bot',
+      type: 'loading',
+      isLoading: true,
+      isVisible: false,
+      showProfileBefore: true,
+    };
+    setChatHistory((prev) => [...prev, loadingBotMessage]);
+
+    setTimeout(() => {
+      const botResponseText = reply === '응!'
+        ? '좋아! 관련 뉴스를 찾아줄게. 잠시만 기다려 줘!'
+        : '아니구나! 다시 정확한 키워드를 입력해 줄래?';
+      setChatHistory((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingBotMessage.id
+            ? {
+                ...msg,
+                type: 'text',
+                text: botResponseText,
+                isLoading: false,
+                isVisible: true,
+              }
+            : msg
+        )
+      );
+      setInputVisible(reply !== '응!');
+    }, 1500);
+  };
 
   return (
     <div className="relative h-full w-full">
-      {/* 메시지 리스트 */}
       <div className="overflow-y-auto h-full px-8 pt-5 pb-[72px] flex flex-col">
         {chatHistory.map((msg, idx) => (
           <div key={msg.id} className={`mb-2 last:mb-0 ${msg.sender === 'user' ? 'self-end' : 'self-start'}`}>
@@ -301,49 +283,48 @@ const ChatPage = () => {
                   />
                 )}
                 <ChatMessage
-                  ref={(el) => (allMessageRefs.current[idx] = el)}
                   isVisible={msg.isVisible ?? true}
                   isLoading={msg.isLoading === true}
                   text={msg.text ?? ''}
                   textSize={textSize}
-                  isBotMessage={msg.sender === 'bot'}
-                  className={'ml-[calc(40px+8px)]'} 
+                  isBotMessage
+                  className="ml-[calc(40px+8px)]"
                 />
               </div>
             ) : (
               <ChatMessage
-                ref={(el) => (allMessageRefs.current[idx] = el)}
                 isVisible={msg.isVisible ?? true}
                 isLoading={msg.isLoading === true}
                 text={msg.text ?? ''}
                 textSize={textSize}
-                isBotMessage={msg.sender === 'bot'}
+                isBotMessage={false}
               />
             )}
           </div>
         ))}
+
+        {/* ⬇️ 스크롤 앵커, 여유 공간 확보 */}
+        <div ref={scrollRef} className="mt-[140px]" />
       </div>
 
-      {/* 입력창/확인 버튼 영역: BottomNav 위 고정 */}
+      {/* 입력창 */}
       <div className="fixed bottom-[56px] left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 py-4 bg-white">
         {showConfirmationButtons ? (
-          // 확인 버튼
           <div className="flex justify-center gap-2">
             <button
               onClick={() => onConfirmReply('응!')}
-              className="px-6 py-2 rounded-full bg-blue-500 text-white" 
+              className="px-6 py-2 rounded-full bg-blue-500 text-white"
             >
               응!
             </button>
             <button
               onClick={() => onConfirmReply('아니야')}
-              className="px-6 py-2 rounded-full bg-gray-300 text-gray-800" 
+              className="px-6 py-2 rounded-full bg-gray-300 text-gray-800"
             >
               아니야
             </button>
           </div>
         ) : (
-          // 사용자 입력창
           <form
             className="flex gap-2"
             onSubmit={(e) => {
