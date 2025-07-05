@@ -228,46 +228,95 @@ const ChatPage = () => {
     }, 1500);
   };
 
-  const onConfirmReply = (reply: string) => {
-    const userConfirmMessage: ChatMessageItem = {
-      id: Date.now(),
-      sender: 'user',
-      type: 'text',
-      text: reply,
-    };
-    setChatHistory((prev) => [...prev, userConfirmMessage]);
-    setShowConfirmationButtons(false);
+const onConfirmReply = (reply: string) => {
+  const userConfirmMessage: ChatMessageItem = {
+    id: Date.now(),
+    sender: 'user',
+    type: 'text',
+    text: reply,
+  };
+  setChatHistory((prev) => [...prev, userConfirmMessage]);
+  setShowConfirmationButtons(false);
 
-    const loadingBotMessage: ChatMessageItem = {
-      id: Date.now() + 1,
-      sender: 'bot',
-      type: 'loading',
-      isLoading: true,
-      isVisible: false,
-      showProfileBefore: true,
-    };
-    setChatHistory((prev) => [...prev, loadingBotMessage]);
+  const loadingBotMessage: ChatMessageItem = {
+    id: Date.now() + 1,
+    sender: 'bot',
+    type: 'loading',
+    isLoading: true,
+    isVisible: false,
+    showProfileBefore: true,
+  };
+  setChatHistory((prev) => [...prev, loadingBotMessage]);
 
+  if (reply === '응!') {
+    const lastUserMessage = chatHistory.filter(m => m.sender === 'user').slice(-1)[0];
+    const keyword = lastUserMessage?.text || '';
+
+    axios.post('http://localhost:8080/api/search/news', {
+      keyword,
+      userId: localStorage.getItem('userId'),
+    })
+    .then((res) => {
+      console.log('서버 응답:', res.data);
+      // Add a timeout here for the bot's response after successful API call
+      setTimeout(() => { // <--- Add this setTimeout
+        setChatHistory((prev) =>
+          prev.map((msg) =>
+            msg.id === loadingBotMessage.id
+              ? {
+                  ...msg,
+                  type: 'text',
+                  text: '좋아! 관련 뉴스를 찾아줄게. 잠시만 기다려 줘!',
+                  isLoading: false,
+                  isVisible: true,
+                }
+              : msg
+          )
+        );
+        setInputVisible(true);
+      }, 1500); // <--- Adjust this delay as needed (e.g., 1500ms for 1.5 seconds)
+    })
+    .catch((err) => {
+      console.error('서버 요청 실패:', err);
+      // Keep the timeout for error messages as well for consistent behavior
+      setTimeout(() => { // <--- Add this setTimeout
+        setChatHistory((prev) =>
+          prev.map((msg) =>
+            msg.id === loadingBotMessage.id
+              ? {
+                  ...msg,
+                  type: 'text',
+                  text: '서버에 문제가 생겼어. 다시 시도해줘!',
+                  isLoading: false,
+                  isVisible: true,
+                }
+              : msg
+          )
+        );
+        setInputVisible(true);
+      }, 1500); // <--- Adjust this delay as needed
+    });
+  } else {
     setTimeout(() => {
-      const botResponseText = reply === '응!'
-        ? '좋아! 관련 뉴스를 찾아줄게. 잠시만 기다려 줘!'
-        : '아니구나! 다시 정확한 키워드를 입력해 줄래?';
       setChatHistory((prev) =>
         prev.map((msg) =>
           msg.id === loadingBotMessage.id
             ? {
                 ...msg,
                 type: 'text',
-                text: botResponseText,
+                text: '아니구나! 다시 정확한 키워드를 입력해 줄래?',
                 isLoading: false,
                 isVisible: true,
               }
             : msg
         )
       );
-      setInputVisible(reply !== '응!');
+      setInputVisible(true);
     }, 1500);
-  };
+  }
+};
+
+
 
   return (
     <div className="relative h-full w-full">
