@@ -228,94 +228,129 @@ const ChatPage = () => {
     }, 1500);
   };
 
-const onConfirmReply = (reply: string) => {
-  const userConfirmMessage: ChatMessageItem = {
-    id: Date.now(),
-    sender: 'user',
-    type: 'text',
-    text: reply,
-  };
-  setChatHistory((prev) => [...prev, userConfirmMessage]);
-  setShowConfirmationButtons(false);
+  const onConfirmReply = (reply: string) => {
+    const confirmMsg: ChatMessageItem = {
+      id: performance.now(),
+      sender: 'user',
+      type: 'text',
+      text: reply
+    };
+    setChatHistory((prev) => [...prev, confirmMsg]);
+    setShowConfirmationButtons(false);
 
-  const loadingBotMessage: ChatMessageItem = {
-    id: Date.now() + 1,
-    sender: 'bot',
-    type: 'loading',
-    isLoading: true,
-    isVisible: false,
-    showProfileBefore: true,
-  };
-  setChatHistory((prev) => [...prev, loadingBotMessage]);
+    const loadingId1 = performance.now() + 1;
+    setChatHistory((prev) => [...prev, {
+      id: loadingId1,
+      sender: 'bot',
+      type: 'loading',
+      isLoading: true,
+      isVisible: false,
+      showProfileBefore: true
+    }]);
 
-  if (reply === '응!') {
-    const lastUserMessage = chatHistory.filter(m => m.sender === 'user').slice(-1)[0];
-    const keyword = lastUserMessage?.text || '';
+    if (reply === '응!') {
+      const lastKeyword = chatHistory.filter((m) => m.sender === 'user').slice(-1)[0]?.text || '';
 
-    axios.post('http://localhost:8080/api/search/news', {
-      keyword,
-      userId: localStorage.getItem('userId'),
-    })
-    .then((res) => {
-      console.log('서버 응답:', res.data);
-      // Add a timeout here for the bot's response after successful API call
-      setTimeout(() => { // <--- Add this setTimeout
+      axios.post('http://localhost:8080/api/search/news', {
+        keyword: lastKeyword,
+        userId: localStorage.getItem('userId')
+      })
+      .then(() => {
         setChatHistory((prev) =>
           prev.map((msg) =>
-            msg.id === loadingBotMessage.id
+            msg.id === loadingId1
               ? {
                   ...msg,
                   type: 'text',
                   text: '좋아! 관련 뉴스를 찾아줄게. 잠시만 기다려 줘!',
                   isLoading: false,
-                  isVisible: true,
+                  isVisible: true
                 }
               : msg
           )
         );
-        setInputVisible(true);
-      }, 1500); // <--- Adjust this delay as needed (e.g., 1500ms for 1.5 seconds)
-    })
-    .catch((err) => {
-      console.error('서버 요청 실패:', err);
-      // Keep the timeout for error messages as well for consistent behavior
-      setTimeout(() => { // <--- Add this setTimeout
+
+        const loadingId2 = performance.now() + 2;
+        setChatHistory((prev) => [...prev, {
+          id: loadingId2,
+          sender: 'bot',
+          type: 'loading',
+          isLoading: true,
+          isVisible: false,
+          showProfileBefore: true
+        }]);
+
+        axios.get(`http://localhost:8080/api/search/news?keyword=${encodeURIComponent(lastKeyword)}`)
+          .then((res) => {
+            const newsList = res.data;
+
+            setChatHistory((prev) => {
+              const filtered = prev.filter((m) => m.id !== loadingId2);
+              const newsMessages = newsList.map((news: any, idx: number) => ({
+                id: performance.now() + 100 + idx,
+                sender: 'bot',
+                type: 'text',
+                text: `🔹 ${news.title}`,
+                isVisible: true,
+                isLoading: false,
+                showProfileBefore: idx === 0
+              }));
+              return [...filtered, ...newsMessages];
+            });
+            setInputVisible(true);
+          })
+          .catch(() => {
+            setChatHistory((prev) =>
+              prev.map((msg) =>
+                msg.id === loadingId2
+                  ? {
+                      ...msg,
+                      type: 'text',
+                      text: '뉴스를 가져오는 데 실패했어. 다시 시도해줘!',
+                      isLoading: false,
+                      isVisible: true
+                    }
+                  : msg
+              )
+            );
+            setInputVisible(true);
+          });
+      })
+      .catch(() => {
         setChatHistory((prev) =>
           prev.map((msg) =>
-            msg.id === loadingBotMessage.id
+            msg.id === loadingId1
               ? {
                   ...msg,
                   type: 'text',
                   text: '서버에 문제가 생겼어. 다시 시도해줘!',
                   isLoading: false,
-                  isVisible: true,
+                  isVisible: true
                 }
               : msg
           )
         );
         setInputVisible(true);
-      }, 1500); // <--- Adjust this delay as needed
-    });
-  } else {
-    setTimeout(() => {
-      setChatHistory((prev) =>
-        prev.map((msg) =>
-          msg.id === loadingBotMessage.id
-            ? {
-                ...msg,
-                type: 'text',
-                text: '아니구나! 다시 정확한 키워드를 입력해 줄래?',
-                isLoading: false,
-                isVisible: true,
-              }
-            : msg
-        )
-      );
-      setInputVisible(true);
-    }, 1500);
-  }
-};
-
+      });
+    } else {
+      setTimeout(() => {
+        setChatHistory((prev) =>
+          prev.map((msg) =>
+            msg.id === loadingId1
+              ? {
+                  ...msg,
+                  type: 'text',
+                  text: '아니구나! 다시 정확한 키워드를 입력해 줄래?',
+                  isLoading: false,
+                  isVisible: true
+                }
+              : msg
+          )
+        );
+        setInputVisible(true);
+      }, 1500);
+    }
+  };
 
 
   return (

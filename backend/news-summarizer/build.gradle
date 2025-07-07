@@ -43,6 +43,7 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'
 	implementation 'org.glassfish.jaxb:jaxb-runtime:3.0.2'
+	implementation 'com.squareup.okhttp3:okhttp:4.11.0'
 
 }
 
