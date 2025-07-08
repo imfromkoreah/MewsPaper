@@ -262,7 +262,7 @@ const ChatPage = () => {
             ? {
                 ...msg,
                 type: 'text',
-                text: '좋아! 관련 뉴스를 찾아볼게. 잠시만 기다려 줘!',
+                text: '좋아! 관련 뉴스를 찾아 요약해줄게. 잠시만 기다려 줘!',
                 isLoading: false,
                 isVisible: true
               }
