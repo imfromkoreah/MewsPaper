@@ -2,8 +2,13 @@ package com.example.news_summarizer.service;
 
 import com.example.news_summarizer.entity.SearchNews;
 import com.example.news_summarizer.repository.SearchNewsRepository;
+import com.example.news_summarizer.service.SearchSummaryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.theokanning.openai.service.OpenAiService;
+import com.theokanning.openai.completion.chat.ChatCompletionRequest;
+import com.theokanning.openai.completion.chat.ChatMessage;
+import com.theokanning.openai.OpenAiHttpException; // 이 부분을 추가하세요!
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -11,18 +16,24 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit; // 이 부분을 추가하세요!
 
 @Service
 public class SearchNewsService {
 
     private final SearchNewsRepository searchNewsRepository;
+    private final SearchSummaryService searchSummaryService;
+
     private final OkHttpClient httpClient = new OkHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -32,27 +43,69 @@ public class SearchNewsService {
     @Value("${naver.client.secret}")
     private String clientSecret;
 
-    public SearchNewsService(SearchNewsRepository searchNewsRepository) {
+    @Value("${openai.api.key}")
+    private String openAiApiKey;
+
+    private OpenAiService openAiService;
+
+    public SearchNewsService(SearchNewsRepository searchNewsRepository,
+                             SearchSummaryService searchSummaryService) {
         this.searchNewsRepository = searchNewsRepository;
+        this.searchSummaryService = searchSummaryService;
+    }
+
+    @PostConstruct
+    public void init() {
+        if (openAiApiKey == null || openAiApiKey.isBlank()) {
+            System.out.println("OpenAI API 키가 주입되지 않았습니다!");
+        } else {
+            System.out.println("OpenAI API 키가 정상적으로 주입되었습니다. (길이: " + openAiApiKey.length() + ")");
+            openAiService = new OpenAiService(openAiApiKey);
+        }
     }
 
     public void searchAndSaveNews(String keyword, String userId) {
         try {
+            System.out.println("[1단계] 네이버 뉴스 링크 검색 시작: " + keyword);
             Set<String> links = searchNewsLinks(keyword);
+            System.out.println("[1단계 완료] 검색된 링크 개수: " + links.size());
+
             for (String link : links) {
                 String uniqueLink = extractUniqueLink(link);
                 if (uniqueLink != null && !searchNewsRepository.existsByUniqueLink(uniqueLink)) {
-                    processAndSaveArticle(uniqueLink, link, keyword, userId);
+                    try {
+                        System.out.println("[2단계] 기사 크롤링 및 저장 시도: " + link);
+                        processAndSaveArticle(uniqueLink, link, keyword, userId);
+                        System.out.println("[2단계 완료] 기사 저장 완료: " + uniqueLink);
+                    } catch (Exception e) {
+                        System.err.println("❌ 기사 처리 실패 (링크: " + link + "): " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("이미 존재하거나 유효하지 않은 링크: " + link);
                 }
             }
+
+            System.out.println("[3단계] 저장된 뉴스 불러오기");
+            List<SearchNews> articles = getNewsByKeywordLimit(keyword, 5);
+            System.out.println("[3단계 완료] 뉴스 개수: " + articles.size());
+
+            System.out.println("[4단계] 뉴스 요약 시작 (GPT 호출)");
+            String summary = summarizeArticles(articles); // 여기에 재시도 로직이 적용됩니다.
+            System.out.println("[4단계 완료] 요약 결과: " + summary);
+
+            System.out.println("[5단계] 요약 저장 시작");
+            searchSummaryService.saveOrUpdateSummary(userId, keyword, summary);
+            System.out.println("[5단계 완료] 요약 저장 성공");
+
         } catch (Exception e) {
-            System.err.println("뉴스 검색 및 저장 실패: " + e.getMessage());
+            System.err.println("🔥 전체 프로세스 실패: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     private Set<String> searchNewsLinks(String keyword) throws IOException {
         Set<String> result = new HashSet<>();
-        String apiUrl = "https://openapi.naver.com/v1/search/news.json?query=" + keyword + "&display=10&start=1&sort=sim";
+        String apiUrl = "https://openapi.naver.com/v1/search/news.json?query=" + keyword + "&display=5&start=1&sort=sim";
 
         Request request = new Request.Builder()
                 .url(apiUrl)
@@ -100,10 +153,10 @@ public class SearchNewsService {
                     .uniqueLink(uniqueLink)
                     .title(title.isBlank() ? "제목 없음" : title)
                     .content(content)
-                    .summary("") // 나중에 요약 처리 넣으면 여기에 세팅
+                    .summary("")
                     .url(fullUrl)
                     .thumbnailUrl(thumbnailUrl)
-                    .publishedDate(LocalDateTime.now()) // 기사 날짜 크롤링 가능하면 수정
+                    .publishedDate(LocalDateTime.now())
                     .build();
 
             searchNewsRepository.save(news);
@@ -130,8 +183,75 @@ public class SearchNewsService {
         return "이미지 없음";
     }
 
-    // ★ 추가 메서드 ★
     public List<SearchNews> getNewsByKeyword(String keyword) {
         return searchNewsRepository.findByKeywordOrderByPublishedDateDesc(keyword);
+    }
+
+    public List<SearchNews> getNewsByKeywordLimit(String keyword, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return searchNewsRepository.findByKeywordOrderByPublishedDateDesc(keyword, pageable);
+    }
+
+    @SuppressWarnings("BusyWait") // Thread.sleep() 사용 경고 억제
+    public String summarizeArticles(List<SearchNews> articles) {
+        if (articles == null || articles.isEmpty()) return "요약할 뉴스가 없습니다.";
+
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("추출한 뉴스 기사들을 읽고 중복된 내용을 제거한 후 핵심만 한 문장으로 요약해줘:\n\n");
+
+        for (SearchNews article : articles) {
+            promptBuilder.append("제목: ").append(article.getTitle()).append("\n");
+            promptBuilder.append("내용: ").append(article.getContent()).append("\n\n");
+        }
+
+        String prompt = promptBuilder.toString();
+
+        ChatCompletionRequest request = ChatCompletionRequest.builder()
+                .model("gpt-3.5-turbo")
+                .messages(List.of(
+                        new ChatMessage("system", "당신은 뉴스 요약 전문가입니다."),
+                        new ChatMessage("user", prompt)
+                ))
+                .maxTokens(300)
+                .build();
+
+        int maxRetries = 5; // 최대 재시도 횟수
+        long initialDelayMillis = 5000; // 초기 지연 시간 (1초)
+
+        for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
+            try {
+                // OpenAI API 호출
+                return openAiService.createChatCompletion(request)
+                        .getChoices()
+                        .get(0)
+                        .getMessage()
+                        .getContent()
+                        .trim();
+            } catch (OpenAiHttpException e) {
+                // OpenAI 라이브러리에서 발생하는 HTTP 예외 처리
+                if (e.statusCode == 429) {
+                    long delay = initialDelayMillis * (1L << retryCount); // 1초, 2초, 4초, 8초, 16초...
+                    System.out.println("OpenAI API 429 오류 발생! " + (retryCount + 1) + "차 재시도. " + delay + "ms 대기.");
+                    try {
+                        // 실제 대기
+                        TimeUnit.MILLISECONDS.sleep(delay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt(); // 인터럽트 상태 복원
+                        System.err.println("재시도 대기 중 인터럽트 발생.");
+                        throw new RuntimeException("OpenAI API 호출 중단됨", ie); // 즉시 예외 던짐
+                    }
+                } else {
+                    // 429 외 다른 HTTP 오류는 즉시 던짐
+                    System.err.println("OpenAI API 오류 (코드: " + e.statusCode + "): " + e.getMessage());
+                    throw e;
+                }
+            } catch (Exception e) {
+                // 그 외 네트워크 문제 등 일반 예외 처리
+                System.err.println("OpenAI API 호출 중 알 수 없는 오류 발생: " + e.getMessage());
+                throw new RuntimeException("OpenAI API 호출 실패", e);
+            }
+        }
+        // 최대 재시도 횟수 초과 시 예외 발생
+        throw new RuntimeException("OpenAI API 호출 재시도 횟수 초과. 요약에 실패했습니다.");
     }
 }
