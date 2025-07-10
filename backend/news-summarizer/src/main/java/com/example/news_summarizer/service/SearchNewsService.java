@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.service.OpenAiService;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
-import com.theokanning.openai.OpenAiHttpException; // Added for OpenAI HTTP exceptions
+import com.theokanning.openai.OpenAiHttpException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -22,11 +22,12 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit; // Added for TimeUnit
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class SearchNewsService {
@@ -60,7 +61,7 @@ public class SearchNewsService {
             System.out.println("OpenAI API 키가 주입되지 않았습니다!");
         } else {
             System.out.println("OpenAI API 키가 정상적으로 주입되었습니다. (길이: " + openAiApiKey.length() + ")");
-            openAiService = new OpenAiService(openAiApiKey);
+            openAiService = new OpenAiService(openAiApiKey, Duration.ofSeconds(60));
         }
     }
 
@@ -86,11 +87,11 @@ public class SearchNewsService {
             }
 
             System.out.println("[3단계] 저장된 뉴스 불러오기");
-            List<SearchNews> articles = getNewsByKeywordLimit(keyword, 5);
+            List<SearchNews> articles = getNewsByKeywordLimit(keyword, 3);
             System.out.println("[3단계 완료] 뉴스 개수: " + articles.size());
 
             System.out.println("[4단계] 뉴스 요약 시작 (GPT 호출)");
-            String summary = summarizeArticles(articles); // Retry logic is applied here
+            String summary = summarizeArticles(articles);
             System.out.println("[4단계 완료] 요약 결과: " + summary);
 
             System.out.println("[5단계] 요약 저장 시작");
@@ -192,7 +193,7 @@ public class SearchNewsService {
         return searchNewsRepository.findByKeywordOrderByPublishedDateDesc(keyword, pageable);
     }
 
-    @SuppressWarnings("BusyWait") // Suppress warning for Thread.sleep()
+    @SuppressWarnings("BusyWait")
     public String summarizeArticles(List<SearchNews> articles) {
         if (articles == null || articles.isEmpty()) return "요약할 뉴스가 없습니다.";
 
@@ -208,7 +209,6 @@ public class SearchNewsService {
                 "'우리 모두가 안전하게 일할 수 있는 환경, 정말 꼭 필요하지!'\n" +
                 "이런 식으로 말이야! \n" +
                 "내용은 정확하게, 요약은 네가 센스 있게 해 줘!\n\n");
-
 
         for (SearchNews article : articles) {
             promptBuilder.append("제목: ").append(article.getTitle()).append("\n");
@@ -226,12 +226,11 @@ public class SearchNewsService {
                 .maxTokens(500)
                 .build();
 
-        int maxRetries = 5; // Maximum number of retries
-        long initialDelayMillis = 5000; // Initial delay (5 seconds)
+        int maxRetries = 5;
+        long initialDelayMillis = 5000;
 
         for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
             try {
-                // Call OpenAI API
                 return openAiService.createChatCompletion(request)
                         .getChoices()
                         .get(0)
@@ -239,30 +238,26 @@ public class SearchNewsService {
                         .getContent()
                         .trim();
             } catch (OpenAiHttpException e) {
-                // Handle HTTP exceptions from OpenAI library
-                if (e.statusCode == 429) { // Too Many Requests
-                    long delay = initialDelayMillis * (1L << retryCount); // Exponential backoff: 5s, 10s, 20s, 40s, 80s...
+                if (e.statusCode == 429) {
+                    long delay = initialDelayMillis * (1L << retryCount);
                     System.out.println("OpenAI API 429 오류 발생! " + (retryCount + 1) + "차 재시도. " + delay + "ms 대기.");
                     try {
-                        // Actual wait
                         TimeUnit.MILLISECONDS.sleep(delay);
                     } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt(); // Restore interrupt status
+                        Thread.currentThread().interrupt();
                         System.err.println("재시도 대기 중 인터럽트 발생.");
-                        throw new RuntimeException("OpenAI API 호출 중단됨", ie); // Throw exception immediately
+                        throw new RuntimeException("OpenAI API 호출 중단됨", ie);
                     }
                 } else {
-                    // Throw other HTTP errors immediately
                     System.err.println("OpenAI API 오류 (코드: " + e.statusCode + "): " + e.getMessage());
                     throw e;
                 }
             } catch (Exception e) {
-                // Handle general exceptions like network issues
                 System.err.println("OpenAI API 호출 중 알 수 없는 오류 발생: " + e.getMessage());
                 throw new RuntimeException("OpenAI API 호출 실패", e);
             }
         }
-        // If max retries exceeded, throw an exception
+
         throw new RuntimeException("OpenAI API 호출 재시도 횟수 초과. 요약에 실패했습니다.");
     }
 }
