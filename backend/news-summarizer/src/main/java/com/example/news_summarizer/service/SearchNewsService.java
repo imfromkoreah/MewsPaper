@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.service.OpenAiService;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
-import com.theokanning.openai.OpenAiHttpException; // 이 부분을 추가하세요!
+import com.theokanning.openai.OpenAiHttpException; // Added for OpenAI HTTP exceptions
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit; // 이 부분을 추가하세요!
+import java.util.concurrent.TimeUnit; // Added for TimeUnit
 
 @Service
 public class SearchNewsService {
@@ -90,7 +90,7 @@ public class SearchNewsService {
             System.out.println("[3단계 완료] 뉴스 개수: " + articles.size());
 
             System.out.println("[4단계] 뉴스 요약 시작 (GPT 호출)");
-            String summary = summarizeArticles(articles); // 여기에 재시도 로직이 적용됩니다.
+            String summary = summarizeArticles(articles); // Retry logic is applied here
             System.out.println("[4단계 완료] 요약 결과: " + summary);
 
             System.out.println("[5단계] 요약 저장 시작");
@@ -192,12 +192,23 @@ public class SearchNewsService {
         return searchNewsRepository.findByKeywordOrderByPublishedDateDesc(keyword, pageable);
     }
 
-    @SuppressWarnings("BusyWait") // Thread.sleep() 사용 경고 억제
+    @SuppressWarnings("BusyWait") // Suppress warning for Thread.sleep()
     public String summarizeArticles(List<SearchNews> articles) {
         if (articles == null || articles.isEmpty()) return "요약할 뉴스가 없습니다.";
 
         StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("추출한 뉴스 기사들을 읽고 중복된 내용을 제거한 후 핵심만 한 문장으로 요약해줘:\n\n");
+        promptBuilder.append("다음 뉴스 기사들을 읽고, 공통 주제랑 핵심 내용을 중심으로 종합해서 요약해 줘! \n" +
+                "비슷하거나 중복되는 내용은 하나로 정리해 주고, 중요한 사건이 왜 일어났고, 어떤 일이 있었는지도 자연스럽게 말해 줘! \n" +
+                "말투는 꼭 친구한테 이야기하듯이, 친근하고 귀엽게 해 줘. \n" +
+                "'~했다', '~였습니다' 같은 딱딱한 말투는 절대 쓰지 말고, '~했어', '~였어', '~야', '~더라구', '~래' 같은 말투로 말해 줘. \n" +
+                "문장은 너무 길지 않게, 말하듯이 끊어 줘. 리듬감 있게, 숨 쉬듯이 자연스럽게 써 줘. \n" +
+                "가능하면 감정도 살짝 담아서, 사람 냄새 나는 말투로 써 줘. \n" +
+                "예를 들어 이런 느낌이야:\n" +
+                "'인천에서 맨홀 사고가 있었어. 안타깝게도 두 명이 다쳤고, 그중 한 명은 목숨을 잃었대...'\n" +
+                "'우리 모두가 안전하게 일할 수 있는 환경, 정말 꼭 필요하지!'\n" +
+                "이런 식으로 말이야! \n" +
+                "내용은 정확하게, 요약은 네가 센스 있게 해 줘!\n\n");
+
 
         for (SearchNews article : articles) {
             promptBuilder.append("제목: ").append(article.getTitle()).append("\n");
@@ -212,15 +223,15 @@ public class SearchNewsService {
                         new ChatMessage("system", "당신은 뉴스 요약 전문가입니다."),
                         new ChatMessage("user", prompt)
                 ))
-                .maxTokens(300)
+                .maxTokens(500)
                 .build();
 
-        int maxRetries = 5; // 최대 재시도 횟수
-        long initialDelayMillis = 5000; // 초기 지연 시간 (1초)
+        int maxRetries = 5; // Maximum number of retries
+        long initialDelayMillis = 5000; // Initial delay (5 seconds)
 
         for (int retryCount = 0; retryCount < maxRetries; retryCount++) {
             try {
-                // OpenAI API 호출
+                // Call OpenAI API
                 return openAiService.createChatCompletion(request)
                         .getChoices()
                         .get(0)
@@ -228,30 +239,30 @@ public class SearchNewsService {
                         .getContent()
                         .trim();
             } catch (OpenAiHttpException e) {
-                // OpenAI 라이브러리에서 발생하는 HTTP 예외 처리
-                if (e.statusCode == 429) {
-                    long delay = initialDelayMillis * (1L << retryCount); // 1초, 2초, 4초, 8초, 16초...
+                // Handle HTTP exceptions from OpenAI library
+                if (e.statusCode == 429) { // Too Many Requests
+                    long delay = initialDelayMillis * (1L << retryCount); // Exponential backoff: 5s, 10s, 20s, 40s, 80s...
                     System.out.println("OpenAI API 429 오류 발생! " + (retryCount + 1) + "차 재시도. " + delay + "ms 대기.");
                     try {
-                        // 실제 대기
+                        // Actual wait
                         TimeUnit.MILLISECONDS.sleep(delay);
                     } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt(); // 인터럽트 상태 복원
+                        Thread.currentThread().interrupt(); // Restore interrupt status
                         System.err.println("재시도 대기 중 인터럽트 발생.");
-                        throw new RuntimeException("OpenAI API 호출 중단됨", ie); // 즉시 예외 던짐
+                        throw new RuntimeException("OpenAI API 호출 중단됨", ie); // Throw exception immediately
                     }
                 } else {
-                    // 429 외 다른 HTTP 오류는 즉시 던짐
+                    // Throw other HTTP errors immediately
                     System.err.println("OpenAI API 오류 (코드: " + e.statusCode + "): " + e.getMessage());
                     throw e;
                 }
             } catch (Exception e) {
-                // 그 외 네트워크 문제 등 일반 예외 처리
+                // Handle general exceptions like network issues
                 System.err.println("OpenAI API 호출 중 알 수 없는 오류 발생: " + e.getMessage());
                 throw new RuntimeException("OpenAI API 호출 실패", e);
             }
         }
-        // 최대 재시도 횟수 초과 시 예외 발생
+        // If max retries exceeded, throw an exception
         throw new RuntimeException("OpenAI API 호출 재시도 횟수 초과. 요약에 실패했습니다.");
     }
 }
