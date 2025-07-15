@@ -3,6 +3,7 @@ import axios from 'axios';
 import GrayDot from '../../assets/svg/graydot.svg';
 import Paper from '../../assets/Paper.png';
 import HTMLFlipBook from 'react-pageflip';
+import { useNavigate } from 'react-router-dom';
 
 const tabs = [
   { id: 'politics', label: '정치', categoryId: 100 },
@@ -28,10 +29,11 @@ type Article = {
 };
 
 export default function News() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('politics');
   const [barStyle, setBarStyle] = useState({ left: 0, width: 0 });
   const [articles, setArticles] = useState<Article[]>([]);
-  const [flipKey, setFlipKey] = useState(0); // 🔑 FlipBook 강제 재마운트용
+  const [flipKey, setFlipKey] = useState(0);
   const tabsRef = useRef<(HTMLDivElement | null)[]>([]);
   const flipBookRef = useRef<any>(null);
 
@@ -50,16 +52,21 @@ export default function News() {
     if (!selected) return;
 
     axios
-      .get(`/api/news?categoryId=${selected.categoryId}`)
+      .get(`http://localhost:8080/api/news?categoryId=${selected.categoryId}`)
       .then(res => {
         setArticles(res.data || []);
-        setFlipKey(prev => prev + 1); // 🔑 FlipBook을 다시 렌더링하게 만듦
+        setFlipKey(prev => prev + 1);
       })
       .catch(err => {
         console.error('뉴스 로딩 실패:', err);
         setArticles([]);
       });
   }, [activeTab]);
+
+  const handleContentClick = (e: React.MouseEvent, uniqueLink: string) => {
+    e.stopPropagation(); // 부모 요소(div)의 클릭 이벤트를 막음
+    navigate(`/news/detail?link=${encodeURIComponent(uniqueLink)}`);
+  };
 
   return (
     <main className="w-full flex flex-col items-center relative">
@@ -105,7 +112,6 @@ export default function News() {
           alt="신문 배경"
           className="w-full h-full absolute top-0 left-0 z-0 object-cover"
         />
-        {/* <div className="absolute top-[0px] left-[25px] w-[8px] h-[466px] bg-[#D4D4D4]/70 z-30" /> */}
 
         {articles.length === 0 ? (
           <div className="flex justify-center items-center w-full h-full text-gray-500 font-semibold z-20 relative">
@@ -113,9 +119,9 @@ export default function News() {
           </div>
         ) : (
           <HTMLFlipBook
-            key={flipKey} // 🔑 key 변경으로 완전 새로 렌더링
+            key={flipKey}
             ref={flipBookRef}
-            width={340}
+            width={342}
             height={465}
             className="relative z-20 overflow-hidden"
             showCover={false}
@@ -146,19 +152,32 @@ export default function News() {
                     </div>
                   </div>
                 </div>
-                <h3 className="font-bold text-lg mb-2 w-full max-w-[350px] text-left line-clamp-2">
+                {/* 타이틀 h3에 클릭 이벤트와 호버 효과 유지 */}
+                <h3
+                  className="font-bold text-lg mb-2 w-full max-w-[350px] text-left line-clamp-2
+                             cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
+                  onClick={(e) => handleContentClick(e, article.uniqueLink)}
+                >
                   {article.title}
                 </h3>
                 <p className="mb-2 text-sm text-black-600">
                   {article.createdAt}
                 </p>
                 <div className="w-full max-w-[350px] border-b border-gray-400 mb-4" />
+                {/* 이미지에 클릭 이벤트와 호버 효과 추가 */}
                 <img
                   src={article.thumbnailUrl}
                   alt="썸네일"
-                  className="max-w-[250px] max-h-[150px] mb-3 rounded shadow"
+                  className="max-w-[250px] max-h-[150px] mb-3 rounded shadow
+                             cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
+                  onClick={(e) => handleContentClick(e, article.uniqueLink)}
                 />
-                <p className="text-sm line-clamp-5 text-center overflow-hidden">
+                {/* 본문 p에 클릭 이벤트와 호버 효과 추가 */}
+                <p
+                  className="text-sm line-clamp-5 text-center overflow-hidden
+                             cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
+                  onClick={(e) => handleContentClick(e, article.uniqueLink)}
+                >
                   {article.content}
                 </p>
               </div>

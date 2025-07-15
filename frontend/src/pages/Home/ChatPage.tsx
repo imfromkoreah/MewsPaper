@@ -577,7 +577,7 @@ const ChatPage = () => {
             </div>
 
             {/* 입력창 */}
-            <div className="fixed bottom-[56px] left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 py-4 bg-white">
+            <div className="fixed bottom-[56px] left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 py-4 bg-white border-l border-r border-gray-200">
                 {showConfirmationButtons ? (
                     <div className="flex justify-center gap-2">
                         <button
