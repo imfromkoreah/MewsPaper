@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import GrayDot from '../../assets/svg/graydot.svg';
-import Paper from '../../assets/Paper.png';
+import Paper from '../../assets/images/Paper.png';
 import HTMLFlipBook from 'react-pageflip';
 import { useNavigate } from 'react-router-dom';
 
@@ -185,6 +185,9 @@ export default function News() {
           </HTMLFlipBook>
         )}
       </div>
+      <p className="mt-6 mb-10 text-sm text-black font-medium">
+        뉴스를 클릭하면 <span className="underline underline-offset-2">상세 페이지</span>로 이동해요 🐱
+      </p>
     </main>
   );
 }

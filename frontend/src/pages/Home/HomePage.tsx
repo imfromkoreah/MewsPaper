@@ -18,7 +18,7 @@ import Week from '../../assets/svg/week.svg';
 const HomePage = () => {
   const navigate = useNavigate();
   const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
-  const [userInfo, setUserInfo] = useState({ nickname: '' });
+  const [userInfo, setUserInfo] = useState({ nickname: '오는 중...' });
 
   const profileImages = [anchorImg1, anchorImg2, anchorImg3, anchorImg4, anchorImg5, anchorImg6];
   const [profileIndex, setProfileIndex] = useState(0);
@@ -37,23 +37,23 @@ const HomePage = () => {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
 
-    axios.get(`http://localhost:8080/api/user/${userId}`)
-      .then((res) => {
-        setUserInfo(res.data);
-      })
-      .catch((err) => {
-        console.error('사용자 정보 불러오기 실패:', err);
-      });
+    const fetchData = async () => {
+      try {
+        const [userRes, attendanceRes] = await Promise.all([
+          axios.get(`http://localhost:8080/api/user/${userId}`),
+          axios.get(`http://localhost:8080/api/user/attendance/${userId}`)
+        ]);
 
-    axios.get(`http://localhost:8080/api/user/attendance/${userId}`)
-      .then((res) => {
-        if (res.data.success && res.data.data) {
-          setAttendanceDates(res.data.data);
+        setUserInfo(userRes.data);
+        if (attendanceRes.data.success && attendanceRes.data.data) {
+          setAttendanceDates(attendanceRes.data.data);
         }
-      })
-      .catch((err) => {
-        console.error('홈페이지 출석 정보 불러오기 실패:', err);
-      });
+      } catch (error) {
+        console.error('데이터 불러오기 실패:', error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const today = new Date();
@@ -72,26 +72,24 @@ const HomePage = () => {
   );
 
   return (
-    <div className="flex flex-col items-center space-y-10 pt-6 pb-16 px-6">
+    <div className="flex flex-col items-center space-y-10 pt-1 pb-16 px-6">
+      {/* CSS 애니메이션 추가 - 투명도만 조절하여 레이아웃 영향 없음 */}
       <style>
         {`
         @keyframes shine {
           0% {
             opacity: 1;
-            transform: scale(1);
           }
           50% {
-            opacity: 0.5;
-            transform: scale(1.1);
+            opacity: 0.3; /* 투명도를 조절하여 반짝이는 효과 */
           }
           100% {
             opacity: 1;
-            transform: scale(1);
           }
         }
 
         .shine-effect {
-          animation: shine 1.5s infinite alternate;
+          animation: shine 1.5s infinite alternate; /* 1.5초 동안 무한 반복, 왔다갔다 */
         }
         `}
       </style>
@@ -134,11 +132,9 @@ const HomePage = () => {
           type="button"
           className="w-[150px] left-[81px] top-[143px] absolute flex items-center space-x-2 cursor-pointer
                       focus:outline-none active:scale-95 transition-transform duration-150"
-          onClick={() => {
-            console.log('뉴스레터 영역 클릭됨');
-            navigate('/home/news-letter');
-          }}
+          onClick={() => navigate('/home/news-letter')}
         >
+          {/* Message 아이콘에 shine-effect 클래스 추가 */}
           <img src={Message} alt="message" className="w-[15px] h-[10px] shine-effect" />
           <div className="flex space-x-1">
             <span className="text-[#090a0a] text-sm font-normal font-['Inter'] leading-tight">
@@ -163,7 +159,7 @@ const HomePage = () => {
             Lv. {userLevel}
           </div>
           <div className="text-[#1c283b] text-sm font-bold font-['Noto_Sans_KR']">
-            {userInfo.nickname ? `${userInfo.nickname}` : '로딩 중'}
+            {userInfo.nickname || '닉네임'}
           </div>
         </div>
 
