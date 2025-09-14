@@ -17,7 +17,10 @@ import reactor.core.publisher.Mono;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder; // PasswordEncoder import 필요
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
 import java.time.LocalDateTime; // 사용자 생성/업데이트 시간 기록용
 import java.util.Optional;
 
@@ -32,10 +35,17 @@ public class LoginService {
     // @Value("${kakao.user-info-uri}")
     // private String kakaoUserInfoUri;
 
+<<<<<<< HEAD
     // 네이버 관련 환경 변수 추가
     @Value("${naver.client-id}")
     private String naverClientId;
     @Value("${naver.client-secret}")
+=======
+    // 네이버 관련 환경 변수 추가 (여기만 . 으로 변경)
+    @Value("${naver.client.id}")
+    private String naverClientId;
+    @Value("${naver.client.secret}")
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
     private String naverClientSecret;
     @Value("${naver.callback-uri}") // 프론트엔드와 동일한 콜백 URI (인증 코드 교환 시 필요)
     private String naverCallbackUri;
@@ -65,12 +75,21 @@ public class LoginService {
                 .baseUrl("https://kapi.kakao.com") // 카카오 기본 URL
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .build();
+<<<<<<< HEAD
             // ⭐ 구글 전용 WebClient를 따로 만드세요!
         this.googleWebClient = webClientBuilder
             .baseUrl("https://oauth2.googleapis.com") // 구글 토큰 및 사용자 정보 API 기본 주소
             // 구글 토큰 요청 시 필요한 기본 헤더가 있다면 추가 (없다면 생략 가능)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE) 
             .build();
+=======
+        // ⭐ 구글 전용 WebClient를 따로 만드세요!
+        this.googleWebClient = webClientBuilder
+                .baseUrl("https://oauth2.googleapis.com") // 구글 토큰 및 사용자 정보 API 기본 주소
+                // 구글 토큰 요청 시 필요한 기본 헤더가 있다면 추가 (없다면 생략 가능)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .build();
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
     }
 
     // --- 카카오 로그인 관련 메서드 ---
@@ -89,11 +108,19 @@ public class LoginService {
     public User authenticateKakaoUser(LoginRequest loginRequest) {
         // 카카오에서 받은 고유 ID (String으로 변환하여 socialId 필드에 저장)
         String name = loginRequest.getKakaoAccount() != null && loginRequest.getKakaoAccount().getProfile() != null ?
+<<<<<<< HEAD
                           loginRequest.getKakaoAccount().getProfile().getNickname() : null;
         String email = loginRequest.getKakaoAccount() != null ? loginRequest.getKakaoAccount().getEmail() : null;
 
         String id = loginRequest.getId().toString();
         
+=======
+                loginRequest.getKakaoAccount().getProfile().getNickname() : null;
+        String email = loginRequest.getKakaoAccount() != null ? loginRequest.getKakaoAccount().getEmail() : null;
+
+        String id = loginRequest.getId().toString();
+
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
         Optional<User> existingUser = loginRepository.findBySocialIdAndSocialProvider(id, SocialProvider.KAKAO);
 
         User user;
@@ -190,7 +217,10 @@ public class LoginService {
         return user;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
     // --- ⭐ Google 로그인 관련 메서드 추가 ⭐ ---
 
     // Google Access Token 획득 메서드
@@ -221,21 +251,28 @@ public class LoginService {
                 .doOnError(e -> System.err.println("Google 사용자 정보 획득 요청 실패: " + e.getMessage()));
     }
 
+<<<<<<< HEAD
    
+=======
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
     // Google 사용자 인증/회원가입 처리 메서드
     public User authenticateGoogleUser(JsonNode googleUserProfile) {
         String socialId = googleUserProfile.has("sub") ? googleUserProfile.get("sub").asText() : null;
         String email = googleUserProfile.has("email") ? googleUserProfile.get("email").asText() : null;
         String name = googleUserProfile.has("name") ? googleUserProfile.get("name").asText() : null;
 
+<<<<<<< HEAD
         // socialId와 socialProvider로 사용자를 찾습니다.
         // findBySocialIdAndSocialProvider는 UserRepository에 정의되어 있어야 합니다.
         
+=======
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
         Optional<User> existingUser = loginRepository.findBySocialIdAndSocialProvider(socialId, SocialProvider.GOOGLE);
 
         User user;
         if (existingUser.isPresent()) {
             user = existingUser.get();
+<<<<<<< HEAD
             // 기존 사용자: 정보 업데이트 (필요하다면)
             // Google에서 받은 최신 정보로 업데이트
             user.setName(name);
@@ -255,6 +292,24 @@ public class LoginService {
                     .build();
             loginRepository.save(user); // 새로운 사용자 정보 저장
             System.out.println("새로운 Google 사용자 회원가입: " + user.getNickname()); // 닉네임이 없으면 null 출력 가능
+=======
+            user.setName(name);
+            user.setEmail(email);
+            user.setUpdatedAt(LocalDateTime.now());
+            loginRepository.save(user);
+            System.out.println("기존 Google 사용자 로그인/정보 업데이트: " + user.getNickname());
+        } else {
+            user = User.builder()
+                    .socialId(socialId)
+                    .socialProvider(SocialProvider.GOOGLE)
+                    .email(email)
+                    .name(name)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            loginRepository.save(user);
+            System.out.println("새로운 Google 사용자 회원가입: " + user.getNickname());
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
         }
         return user;
     }
@@ -263,12 +318,17 @@ public class LoginService {
     public User authenticateEmailUser(EmailLoginRequest userJsonNode, String pString) {
         String email = userJsonNode.getEmail();
         String password = userJsonNode.getPassword();
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
         Optional<User> existingUser = loginRepository.findBySocialIdAndSocialProvider(email, SocialProvider.DIRECT);
 
         User user;
         if (existingUser.isPresent()) {
             user = existingUser.get();
+<<<<<<< HEAD
             if (pString == "reg" )
                 throw new BadCredentialsException("이미 존재하는 사용자 입니다.");
             else if(pString == "login"){
@@ -278,11 +338,21 @@ public class LoginService {
                     return user; // 인증된 사용자 객체 반환
                 } else {
                     // 비밀번호 불일치
+=======
+            if (pString == "reg")
+                throw new BadCredentialsException("이미 존재하는 사용자 입니다.");
+            else if (pString == "login") {
+                if (passwordEncoder.matches(password, user.getPassword())) {
+                    System.out.println("로컬 사용자 로그인 성공: " + user.getEmail());
+                    return user;
+                } else {
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
                     System.out.println("로그인 실패: 비밀번호 불일치 (이메일: " + email + ")");
                     throw new BadCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다.");
                 }
             }
         } else {
+<<<<<<< HEAD
              if(pString == "login"){
                 throw new BadCredentialsException("존재하지 않는 사용자입니다. 회원가입을 진행해 주세요.");
             }
@@ -303,3 +373,24 @@ public class LoginService {
         return user;
     }
 }
+=======
+            if (pString == "login") {
+                throw new BadCredentialsException("존재하지 않는 사용자입니다. 회원가입을 진행해 주세요.");
+            }
+            String encodedPassword = passwordEncoder.encode(password);
+
+            user = User.builder()
+                    .socialId(email)
+                    .socialProvider(SocialProvider.DIRECT)
+                    .email(email)
+                    .password(encodedPassword)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            loginRepository.save(user);
+            System.out.println("새로운 이메일 사용자 회원가입: " + user.getNickname());
+        }
+        return user;
+    }
+}
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7

@@ -141,7 +141,11 @@ const useNaverLogin = ({
                         }
                     }
                     if (responseData.token) {
+<<<<<<< HEAD
                         localStorage.setItem('authToken', responseData.token); // JWT 토큰 저장
+=======
+                        localStorage.setItem('userToken', responseData.token); // JWT 토큰 저장
+>>>>>>> 50eeb761c2ed73880a8fcdf3f5d0f271407532e7
                     }
                     setIsLoggedIn(true);
                     setError(null);

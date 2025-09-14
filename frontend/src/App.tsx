@@ -9,10 +9,11 @@ import AttendanceCalendar from './components/AttendanceCalendar';
 import ScrapNews from './components/ScrapNews';
 
 import HomePage from './pages/Home';
+import LetterPage from './pages/Home/LetterPage';
 import NewsPage from './pages/Home/NewsPage';
 import NewsDetailPage from './pages/Home/NewsDetailPage';
 import ChatPage from './pages/Home/ChatPage';
-import MyPage from './pages/Home/MyPage';
+import MyPage from './pages/Home/Mypage';
 import NotificationPage from './pages/Home/NotificationPage';
 
 
@@ -28,7 +29,7 @@ import GoogleCallback from './pages/Auth/GoogleCallback'; // <-- 이 줄이 중�
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/onboarding" />} />
+      <Route path="/" element={<Navigate to="/Splash" />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/splash" element={<Splash />} />
       <Route path="/join" element={<Join />} />
@@ -36,8 +37,9 @@ function App() {
       <Route path="/noti" element={<NotificationPage />} />
       <Route path="/news/detail" element={<NewsDetailPage />} />
       <Route path="/home/mypage" element={<MyPage />} />
+      <Route path="/home/news-letter" element={<LetterPage />} />
       <Route path="/calendar" element={<Calendar />} />
-      <Route path="/attendanceCalendar" element={<AttendanceCalendar />} />
+      <Route path="/attendanceCalendar" element={<AttendanceCalendar attendanceDates={[]} />} />
       <Route path="/scrap-news" element={<ScrapNews />} />
 
       {/* Settings 관련 페이지들 */}

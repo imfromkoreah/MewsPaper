@@ -10,6 +10,8 @@ import LikeOffIcon from '../../assets/svg/like_off.svg';
 import DisLikeOffIcon from '../../assets/svg/dislike_off.svg';
 import ClipOffIcon from '../../assets/svg/clip_off.svg';
 
+ import sampleImage from '../../assets/images/sample.jpg'; // Import the image
+
 export default function NewsDetailPage() {
   const navigate = useNavigate();
 
@@ -56,13 +58,14 @@ export default function NewsDetailPage() {
           </div>
 
           {/* 이미지 - px-5 밖으로 뺌 */}
-          <div className="-mx-5 mt-4">
-            <img
-              src="https://placehold.co/375x194"
-              alt="뉴스 이미지"
-              className="w-full h-48 object-cover"
-            />
-          </div>
+            <div className="-mx-5 mt-4">
+              <img
+                src={sampleImage}
+                alt="뉴스 이미지"
+                className="w-full h-48 object-cover"
+              />
+            </div>
+
 
           {/* 간단 요약 */}
           <div className="flex gap-3 px-4 mt-4">
