@@ -1,0 +1,5 @@
+# secret config
+backend/news-summarizer/src/main/resources/application-secret.properties
+
+# node_modules (프론트엔드/백엔드 모두)
+node_modules/
