@@ -26,7 +26,7 @@ public class News {
     private String content;
 
     @Column(name = "category_id")
-    private Integer categoryId;
+    private Integer categoryId;  // ✅ 카테고리 ID 추가
 
     private String source;
 
@@ -54,5 +54,9 @@ public class News {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = new Timestamp(System.currentTimeMillis());
+    }
+
+    public Object map(Object object) {
+        throw new UnsupportedOperationException("Unimplemented method 'map'");
     }
 }

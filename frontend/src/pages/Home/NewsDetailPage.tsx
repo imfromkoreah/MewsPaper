@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../../components/Header';
 
 import SummaryInfoIcon from '../../assets/svg/down_arrow.svg';
@@ -10,32 +11,44 @@ import LikeOffIcon from '../../assets/svg/like_off.svg';
 import DisLikeOffIcon from '../../assets/svg/dislike_off.svg';
 import ClipOffIcon from '../../assets/svg/clip_off.svg';
 
- import sampleImage from '../../assets/images/sample.jpg'; // Import the image
-
 export default function NewsDetailPage() {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const link = queryParams.get('link');
   const navigate = useNavigate();
 
+  const [news, setNews] = useState<any | null>(null);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
   const [clipped, setClipped] = useState(false);
 
+  const tabs = [
+  { id: 'politics', label: '정치', categoryId: 100 },
+  { id: 'economy', label: '경제', categoryId: 101 },
+  { id: 'society', label: '사회', categoryId: 102 },
+  { id: 'culture', label: '생활/문화', categoryId: 103 },
+  { id: 'world', label: '세계', categoryId: 104 },
+  { id: 'it', label: 'IT/과학', categoryId: 105 },
+];
+
+  useEffect(() => {
+    if (!link) return;
+
+    axios
+      .get(`http://localhost:8080/api/news/detail?link=${encodeURIComponent(link)}`)
+      .then(res => setNews(res.data))
+      .catch(err => console.error('뉴스 상세 조회 실패:', err));
+  }, [link]);
+
   const handleBack = () => navigate(-1);
+  const toggleLike = () => { setLiked(prev => !prev); if (disliked) setDisliked(false); };
+  const toggleDislike = () => { setDisliked(prev => !prev); if (liked) setLiked(false); };
+  const toggleClip = () => setClipped(prev => !prev);
 
-  const toggleLike = () => {
-    setLiked((prev) => !prev);
-    if (disliked) setDisliked(false);
-  };
-
-  const toggleDislike = () => {
-    setDisliked((prev) => !prev);
-    if (liked) setLiked(false);
-  };
-
-  const toggleClip = () => setClipped((prev) => !prev);
+  if (!news) return <div className="w-full flex justify-center mt-8">뉴스를 불러오는 중입니다...</div>;
 
   return (
     <div className="w-full h-screen flex justify-center bg-gray-100 overflow-auto">
-      {/* 스크롤은 여기서 발생 */}
       <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white overflow-visible">
         <Header title="뉴스 확대" onBack={handleBack} />
 
@@ -44,7 +57,7 @@ export default function NewsDetailPage() {
           <div className="absolute left-5 top-0">
             <div className="px-3 py-1 bg-[#f9f5ff] rounded-2xl">
               <div className="text-[#6840c6] text-sm font-medium">
-                세계 <span className="font-bold">1위</span>
+                {news.categoryId ? tabs.find(t => t.categoryId === news.categoryId)?.label : '뉴스'} <span className="font-bold">1위</span>
               </div>
             </div>
           </div>
@@ -52,34 +65,34 @@ export default function NewsDetailPage() {
           {/* 헤드라인 + 날짜 */}
           <div className="mb-4 pt-4">
             <div className="font-['Inter'] text-[24px] font-bold text-[#090a0a] tracking-wider mt-1">
-              뉴욕 허드슨강 헬기 추락... 탑승자 6명 전원 사망
+              {news.title}
             </div>
-            <div className="text-sm text-[#090a0a] mt-1">2025.04.11. 금요일 오전</div>
+            <div className="text-sm text-[#090a0a] mt-1">{news.publishedDate || ''}</div>
           </div>
 
-          {/* 이미지 - px-5 밖으로 뺌 */}
+          {/* 이미지 */}
+          {news.thumbnailUrl && (
             <div className="-mx-5 mt-4">
               <img
-                src={sampleImage}
+                src={news.thumbnailUrl}
                 alt="뉴스 이미지"
-                className="w-full h-48 object-cover"
+                className="w-full max-h-[400px] object-contain"
               />
             </div>
-
+          )}
 
           {/* 간단 요약 */}
-          <div className="flex gap-3 px-4 mt-4">
-            {/* 세로 바 */}
-            <div className="w-[8px] bg-[#6a4dff] rounded-full" />
-
-            {/* 텍스트 박스 */}
-            <div className="space-y-1">
-              <p className="text-xs font-bold">간단 요약</p>
-              <p className="text-xs text-black px-3">
-                탑승자들은 스페인에서 온 가족 관광객과 조종사 1명입니다. 사고 원인에 대한 조사가 진행 중이며, 유사 사고가 과거에도 발생했습니다.
-              </p>
+          {news.content && (
+            <div className="flex gap-3 px-4 mt-4">
+              <div className="w-[8px] bg-[#6a4dff] rounded-full" />
+              <div className="space-y-1">
+                <p className="text-xs font-bold">간단 요약</p>
+                <p className="text-xs text-black px-3 line-clamp-3">
+                  {news.content}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 요약 안내 박스 */}
           <div className="flex items-center gap-4 px-10 py-4 bg-[#cacaca]/20 rounded-xl mt-5 mb-5">
@@ -92,16 +105,8 @@ export default function NewsDetailPage() {
           </div>
 
           {/* 본문 */}
-          <div className="text-sm text-[#090a0a]">
-            미국 뉴욕의 허드슨강에 10일(현지시간) 헬기 1대가 추락해 탑승자 6명이 모두 숨졌다.
-
- 
-
-AP통신 등에 따르면 이날 오후 3시17분쯤 헬기 추락 사고 신고가 접수됐으며 소방당국은 현장에서 구조작업을 벌였다. 사고 당시 헬기에는 조종사와 스페인 관광객 가족이 탑승해 있었다. 현지 경찰은 사고 현장에서 발견된 4명은 숨졌으며, 2명은 지역 병원으로 이송되었으나 사망했다고 전했다. 사고 원인에 대해서는 조사 중인 것으로 알려졌다. 해당 헬기는 약 16분간 비행한 후 강으로 추락한 것으로 CNN과 비행 추적 사이트 플라이트레이더 24는 분석했다. 
-
- 
-
-뉴욕 상공에서는 여러 해 동안 수 많은 항공기 사고가 발생해왔다. 앞서 2009년에는 허드슨강 상공에서 비행기와 관광용 헬기가 충돌해 9명이 숨졌고, 2018년에는 이스트강에 전세 헬기 1대가 추락해 승객 5명이 사망했다.
+          <div className="text-sm text-[#090a0a] whitespace-pre-line">
+            {news.content}
           </div>
         </div>
 
