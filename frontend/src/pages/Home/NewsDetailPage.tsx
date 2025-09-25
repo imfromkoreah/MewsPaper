@@ -23,13 +23,13 @@ export default function NewsDetailPage() {
   const [clipped, setClipped] = useState(false);
 
   const tabs = [
-  { id: 'politics', label: '정치', categoryId: 100 },
-  { id: 'economy', label: '경제', categoryId: 101 },
-  { id: 'society', label: '사회', categoryId: 102 },
-  { id: 'culture', label: '생활/문화', categoryId: 103 },
-  { id: 'world', label: '세계', categoryId: 104 },
-  { id: 'it', label: 'IT/과학', categoryId: 105 },
-];
+    { id: 'politics', label: '정치', categoryId: 100 },
+    { id: 'economy', label: '경제', categoryId: 101 },
+    { id: 'society', label: '사회', categoryId: 102 },
+    { id: 'culture', label: '생활/문화', categoryId: 103 },
+    { id: 'world', label: '세계', categoryId: 104 },
+    { id: 'it', label: 'IT/과학', categoryId: 105 },
+  ];
 
   useEffect(() => {
     if (!link) return;
@@ -45,11 +45,23 @@ export default function NewsDetailPage() {
   const toggleDislike = () => { setDisliked(prev => !prev); if (liked) setLiked(false); };
   const toggleClip = () => setClipped(prev => !prev);
 
-  if (!news) return <div className="w-full flex justify-center mt-8">뉴스를 불러오는 중입니다...</div>;
+  // 로딩 상태: 화면 구조 유지, 중앙에 로딩 메시지
+  if (!news) {
+    return (
+      <div className="w-full h-screen flex justify-center bg-gray-100">
+        <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white">
+          <Header title="뉴스 확대" onBack={handleBack} />
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-gray-500">뉴스를 불러오는 중이다냥...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-screen flex justify-center bg-gray-100 overflow-auto">
-      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white overflow-visible">
+    <div className="w-full h-screen flex justify-center bg-gray-100">
+      <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white">
         <Header title="뉴스 확대" onBack={handleBack} />
 
         <div className="flex-1 overflow-auto relative px-5 pt-4 pb-20 mt-3">
