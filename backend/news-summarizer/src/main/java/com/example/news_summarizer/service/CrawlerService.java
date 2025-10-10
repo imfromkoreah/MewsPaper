@@ -21,6 +21,16 @@ public class CrawlerService {
         this.newsRepository = newsRepository;
     }
 
+    /*
+     * - 정치: 100
+     * - 경제: 101
+     * - 사회: 102
+     * - 생활/문화: 103
+     * - 세계: 104
+     * - IT/과학: 105
+     */
+
+    // 단일 카테고리 크롤링
     public void crawl(int categoryId) {
         try {
             String baseUrl = "https://news.naver.com/section/" + categoryId;
@@ -36,7 +46,7 @@ public class CrawlerService {
                     String uniqueLink = parts[1].split("\\?")[0];
                     if (uniqueLink.length() == 14) {
                         uniqueLinks.add(uniqueLink);
-                        if (uniqueLinks.size() >= 10) break;
+                        if (uniqueLinks.size() >= 10) break; // Top 10 뉴스만
                     }
                 }
             }
@@ -46,10 +56,21 @@ public class CrawlerService {
             }
 
         } catch (IOException e) {
-            System.err.println("크롤링 오류: " + e.getMessage());
+            System.err.println("크롤링 오류 (카테고리 " + categoryId + "): " + e.getMessage());
         }
     }
 
+    // 전체 카테고리 크롤링
+    public void crawlAllCategories() {
+        int[] categoryIds = {100, 101, 102, 103, 104, 105};
+        for (int id : categoryIds) {
+            System.out.println("카테고리 " + id + " 크롤링 시작...");
+            crawl(id);
+            System.out.println("카테고리 " + id + " 크롤링 완료!");
+        }
+    }
+
+    // 개별 기사 처리
     private void processArticle(String uniqueLink, int categoryId) {
         try {
             String url = "https://n.news.naver.com/article/" + uniqueLink;
@@ -68,7 +89,7 @@ public class CrawlerService {
             String thumbnailUrl = extractImage(doc);
 
             News news = News.builder()
-                    .uniqueLink(uniqueLink) // PK 설정
+                    .uniqueLink(uniqueLink)
                     .title(title.isBlank() ? "제목 없음" : title)
                     .content(content)
                     .categoryId(categoryId)
@@ -83,6 +104,7 @@ public class CrawlerService {
         }
     }
 
+    // 이미지 추출
     private String extractImage(Document doc) {
         String[] selectors = {
                 "#img1[src]", "#img1[data-src]",

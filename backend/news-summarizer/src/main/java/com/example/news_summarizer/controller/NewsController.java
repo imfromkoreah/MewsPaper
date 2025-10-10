@@ -1,7 +1,9 @@
 package com.example.news_summarizer.controller;
 
 import com.example.news_summarizer.dto.NewsDTO;
+import com.example.news_summarizer.service.CrawlerService;
 import com.example.news_summarizer.service.NewsService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,9 +15,25 @@ import java.util.stream.Collectors;
 public class NewsController {
 
     private final NewsService newsService;
+    private final CrawlerService crawlerService;
 
-    public NewsController(NewsService newsService) {
+    public NewsController(NewsService newsService, CrawlerService crawlerService) {
         this.newsService = newsService;
+        this.crawlerService = crawlerService;
+    }
+
+    // 단일 카테고리 크롤링
+    @PostMapping("/crawl/{categoryId}")
+    public ResponseEntity<String> crawl(@PathVariable int categoryId) {
+        crawlerService.crawl(categoryId);
+        return ResponseEntity.ok("카테고리 " + categoryId + " 크롤링 완료");
+    }
+
+    // 전체 카테고리 크롤링
+    @PostMapping("/crawl-all")
+    public ResponseEntity<String> crawlAll() {
+        crawlerService.crawlAllCategories();
+        return ResponseEntity.ok("모든 카테고리 크롤링 완료");
     }
 
     // 카테고리별 Top 10 뉴스 조회
