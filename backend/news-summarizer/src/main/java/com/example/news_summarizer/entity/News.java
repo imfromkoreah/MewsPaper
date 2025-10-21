@@ -25,8 +25,13 @@ public class News {
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
+    // ✅ 요약문 필드 추가
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String summary;
+
     @Column(name = "category_id")
-    private Integer categoryId;  // ✅ 카테고리 ID 추가
+    private Integer categoryId;
 
     private String source;
 

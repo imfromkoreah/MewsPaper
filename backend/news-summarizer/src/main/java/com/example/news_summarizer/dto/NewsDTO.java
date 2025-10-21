@@ -1,55 +1,33 @@
 package com.example.news_summarizer.dto;
 
 import com.example.news_summarizer.entity.News;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
 
-@Builder
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class NewsDTO {
-
-    @JsonProperty("uniqueLink")
     private String uniqueLink;
-
-    @JsonProperty("title")
     private String title;
-
-    @JsonProperty("content")
     private String content;
-
-    @JsonProperty("thumbnailUrl")
+    private String summary; // ✅ 요약문 필드 추가
+    private Integer categoryId;
+    private String url;
     private String thumbnailUrl;
-
-    @JsonProperty("source")
-    private String source;
-
-    @JsonProperty("publishedDate")
     private String publishedDate;
 
-    @JsonProperty("url")
-    private String url;
-
-    @JsonProperty("categoryId")   // ✅ 추가
-    private Integer categoryId;
-
-    // ✅ fromEntity 수정
-    public static NewsDTO fromEntity(News entity) {
+    public static NewsDTO fromEntity(News news) {
         return NewsDTO.builder()
-                .uniqueLink(entity.getUniqueLink())
-                .title(entity.getTitle())
-                .content(entity.getContent())
-                .thumbnailUrl(entity.getThumbnailUrl())
-                .source(entity.getSource())
-                .publishedDate(entity.getPublishedDate())
-                .url(entity.getUrl())
-                .categoryId(entity.getCategoryId()) // ✅ 매핑 추가
+                .uniqueLink(news.getUniqueLink())
+                .title(news.getTitle())
+                .content(news.getContent())
+                .summary(news.getSummary()) // ✅ 요약 매핑 필수!!
+                .categoryId(news.getCategoryId())
+                .url(news.getUrl())
+                .thumbnailUrl(news.getThumbnailUrl())
+                .publishedDate(news.getPublishedDate())
                 .build();
     }
 }
