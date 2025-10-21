@@ -37,13 +37,16 @@ export default function NewsDetailPage() {
 
     const userId = localStorage.getItem('userId');
 
-    // 뉴스 상세 가져오기
+    // ✅ 뉴스 상세 가져오기
     axios
       .get(`http://localhost:8080/api/news/detail?link=${encodeURIComponent(uniqueLink)}`)
-      .then(res => setNews(res.data))
+      .then(res => {
+        console.log('📦 뉴스 상세 응답:', res.data);
+        setNews(res.data);
+      })
       .catch(err => console.error('뉴스 상세 조회 실패:', err));
 
-    // 로그인되어 있다면 스크랩 여부 확인
+    // ✅ 로그인되어 있다면 스크랩 여부 확인
     if (userId) {
       axios
         .get(`http://localhost:8080/api/scrap/list?userId=${userId}`)
@@ -56,8 +59,14 @@ export default function NewsDetailPage() {
   }, [uniqueLink]);
 
   const handleBack = () => navigate(-1);
-  const toggleLike = () => { setLiked(prev => !prev); if (disliked) setDisliked(false); };
-  const toggleDislike = () => { setDisliked(prev => !prev); if (liked) setLiked(false); };
+  const toggleLike = () => {
+    setLiked(prev => !prev);
+    if (disliked) setDisliked(false);
+  };
+  const toggleDislike = () => {
+    setDisliked(prev => !prev);
+    if (liked) setLiked(false);
+  };
   const toggleClip = () => {
     if (!news) return;
     const userId = localStorage.getItem('userId');
@@ -67,7 +76,8 @@ export default function NewsDetailPage() {
       ? `http://localhost:8080/api/scrap/remove?userId=${userId}&uniqueLink=${encodeURIComponent(news.uniqueLink)}`
       : `http://localhost:8080/api/scrap/add?userId=${userId}&uniqueLink=${encodeURIComponent(news.uniqueLink)}`;
 
-    axios.post(apiUrl)
+    axios
+      .post(apiUrl)
       .then(() => {
         setClipped(prev => !prev);
         alert(!clipped ? '스크랩 완료' : '스크랩 취소 완료');
@@ -106,6 +116,7 @@ export default function NewsDetailPage() {
             </div>
           </div>
 
+          {/* ✅ 제목 + 날짜 */}
           <div className="mb-4 pt-4">
             <div className="font-['Inter'] text-[24px] font-bold text-[#090a0a] tracking-wider mt-1">
               {news.title}
@@ -113,7 +124,8 @@ export default function NewsDetailPage() {
             <div className="text-sm text-[#090a0a] mt-1">{news.publishedDate || ''}</div>
           </div>
 
-          {news.thumbnailUrl && (
+          {/* ✅ 썸네일 */}
+          {news.thumbnailUrl && news.thumbnailUrl !== '이미지 없음' && (
             <div className="-mx-5 mt-4">
               <img
                 src={news.thumbnailUrl}
@@ -123,18 +135,24 @@ export default function NewsDetailPage() {
             </div>
           )}
 
-          {news.content && (
-            <div className="flex gap-3 px-4 mt-4">
-              <div className="w-[8px] bg-[#6a4dff] rounded-full" />
-              <div className="space-y-1">
-                <p className="text-xs font-bold">간단 요약</p>
-                <p className="text-xs text-black px-3 line-clamp-3">
-                  {news.content}
+          {/* ✅ 간단 요약 (요약 없을 시 안내 문구 표시) */}
+          <div className="flex gap-3 px-4 mt-4">
+            <div className="w-[8px] bg-[#6a4dff] rounded-full" />
+            <div className="space-y-1">
+              <p className="text-xs font-bold">간단 요약🔍</p>
+              {news.summary ? (
+                <p className="text-xs text-black px-3 whitespace-pre-line">
+                  {news.summary}
                 </p>
-              </div>
+              ) : (
+                <p className="text-xs text-gray-500 px-3">
+                  요약 준비 중입니다 😺
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
+          {/* ✅ 안내 박스 */}
           <div className="flex items-center gap-4 px-10 py-4 bg-[#cacaca]/20 rounded-xl mt-5 mb-5">
             <img src={SummaryInfoIcon} alt="요약 아이콘" className="w-6 h-6" />
             <p className="text-xs text-black leading-snug">
@@ -144,11 +162,13 @@ export default function NewsDetailPage() {
             </p>
           </div>
 
+          {/* ✅ 본문 */}
           <div className="text-sm text-[#090a0a] whitespace-pre-line">
             {news.content}
           </div>
         </div>
 
+        {/* ✅ 하단 버튼 (좋아요 / 스크랩 / 싫어요) */}
         <nav className="h-14 bg-white flex justify-around items-center border-t shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
           <button onClick={toggleLike} className="focus:outline-none">
             <img src={liked ? LikeOnIcon : LikeOffIcon} alt="좋아요" className="h-6 w-6" />
