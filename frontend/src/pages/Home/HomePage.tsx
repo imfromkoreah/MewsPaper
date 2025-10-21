@@ -19,10 +19,11 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
   const [userInfo, setUserInfo] = useState({ nickname: '오는 중...' });
-
-  const profileImages = [anchorImg1, anchorImg2, anchorImg3, anchorImg4, anchorImg5, anchorImg6];
+  const [unreadNewsletterCount, setUnreadNewsletterCount] = useState(0); // 추가
   const [profileIndex, setProfileIndex] = useState(0);
+  const profileImages = [anchorImg1, anchorImg2, anchorImg3, anchorImg4, anchorImg5, anchorImg6];
 
+  // 프로필 인덱스 불러오기
   useEffect(() => {
     const savedIndex = localStorage.getItem('profileIndex');
     if (savedIndex !== null) {
@@ -33,21 +34,27 @@ const HomePage = () => {
     }
   }, []);
 
+  // 사용자 정보 & 출석 데이터 불러오기
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
 
     const fetchData = async () => {
       try {
-        const [userRes, attendanceRes] = await Promise.all([
+        const [userRes, attendanceRes, newsletterRes] = await Promise.all([
           axios.get(`http://localhost:8080/api/user/${userId}`),
-          axios.get(`http://localhost:8080/api/user/attendance/${userId}`)
+          axios.get(`http://localhost:8080/api/user/attendance/${userId}`),
+          axios.get(`http://localhost:8080/api/newsletter/user/${userId}`) // 뉴스레터 API 호출
         ]);
 
         setUserInfo(userRes.data);
         if (attendanceRes.data.success && attendanceRes.data.data) {
           setAttendanceDates(attendanceRes.data.data);
         }
+
+        // 안 읽은 뉴스레터 개수 계산
+        const unread = newsletterRes.data?.filter((card: any) => !card.read)?.length || 0;
+        setUnreadNewsletterCount(unread);
       } catch (error) {
         console.error('데이터 불러오기 실패:', error);
       }
@@ -73,24 +80,14 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col items-center space-y-10 pt-1 pb-16 px-6">
-      {/* CSS 애니메이션 추가 - 투명도만 조절하여 레이아웃 영향 없음 */}
       <style>
         {`
         @keyframes shine {
-          0% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.3; /* 투명도를 조절하여 반짝이는 효과 */
-          }
-          100% {
-            opacity: 1;
-          }
+          0% { opacity: 1; }
+          50% { opacity: 0.3; }
+          100% { opacity: 1; }
         }
-
-        .shine-effect {
-          animation: shine 1.5s infinite alternate; /* 1.5초 동안 무한 반복, 왔다갔다 */
-        }
+        .shine-effect { animation: shine 1.5s infinite alternate; }
         `}
       </style>
 
@@ -100,8 +97,7 @@ const HomePage = () => {
 
         <button
           type="button"
-          className="left-[109px] top-[32px] absolute flex items-center space-x-1 text-[#090a0a] text-sm font-normal font-['Inter'] leading-none cursor-pointer
-                      focus:outline-none active:scale-95 transition-transform duration-150"
+          className="left-[109px] top-[32px] absolute flex items-center space-x-1 text-[#090a0a] text-sm font-normal font-['Inter'] leading-none cursor-pointer focus:outline-none active:scale-95 transition-transform duration-150"
           onClick={() => navigate('/home/mypage')}
         >
           <span>{formattedDate}</span>
@@ -110,12 +106,8 @@ const HomePage = () => {
 
         <div className="absolute left-1/2 top-[55px] -translate-x-1/2 flex flex-col items-center max-w-fit">
           <div className="flex items-center justify-center space-x-1 whitespace-nowrap relative">
-            <span className="text-[#090a0a]/30 text-lg font-bold font-['Inter'] leading-normal">
-              7일 출석 미션 중
-            </span>
-            <span className="text-[#090a0a] text-lg font-bold font-['Inter'] leading-normal">
-              {checkedInCount % 7}일 출석
-            </span>
+            <span className="text-[#090a0a]/30 text-lg font-bold font-['Inter'] leading-normal">7일 출석 미션 중</span>
+            <span className="text-[#090a0a] text-lg font-bold font-['Inter'] leading-normal">{checkedInCount % 7}일 출석</span>
             <img src={PurpleDot} alt="출석 상태 점" className="absolute -right-6 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" />
           </div>
 
@@ -128,49 +120,26 @@ const HomePage = () => {
 
         <div className="w-[280px] h-px left-[16px] top-[127px] absolute bg-[#d9d9d9]" />
 
+        {/* 안 읽은 뉴스레터 버튼 */}
         <button
           type="button"
-          className="w-[150px] left-[81px] top-[143px] absolute flex items-center space-x-2 cursor-pointer
-                      focus:outline-none active:scale-95 transition-transform duration-150"
+          className="w-[150px] left-[81px] top-[143px] absolute flex items-center space-x-2 cursor-pointer focus:outline-none active:scale-95 transition-transform duration-150"
           onClick={() => navigate('/home/news-letter')}
         >
-          {/* Message 아이콘에 shine-effect 클래스 추가 */}
           <img src={Message} alt="message" className="w-[15px] h-[10px] shine-effect" />
           <div className="flex space-x-1">
-            <span className="text-[#090a0a] text-sm font-normal font-['Inter'] leading-tight">
-              안 읽은 뉴스레터
-            </span>
-            <span className="text-[#090a0a] text-sm font-bold font-['Inter'] leading-tight">
-              3개
-            </span>
+            <span className="text-[#090a0a] text-sm font-normal font-['Inter'] leading-tight">안 읽은 뉴스레터</span>
+            <span className="text-[#090a0a] text-sm font-bold font-['Inter'] leading-tight">{unreadNewsletterCount}개</span>
           </div>
         </button>
       </div>
 
       {/* 이미지 설명 영역 */}
       <div className="w-[321px] h-[300px] relative">
-        <img
-          className="absolute left-1/2 top-0 -translate-x-1/2 w-[200px] h-auto"
-          src={profileImages[profileIndex]}
-          alt="대표 이미지"
-        />
+        <img className="absolute left-1/2 top-0 -translate-x-1/2 w-[200px] h-auto" src={profileImages[profileIndex]} alt="대표 이미지" />
         <div className="absolute left-1/2 top-[330px] transform -translate-x-1/2 text-center flex items-center justify-center space-x-2">
-          <div className="text-[#1c283b] text-sm font-bold font-['Noto_Sans_KR']">
-            Lv. {userLevel}
-          </div>
-          <div className="text-[#1c283b] text-sm font-bold font-['Noto_Sans_KR']">
-            {userInfo.nickname || '닉네임'}
-          </div>
-        </div>
-
-        <div className="left-[260px] top-[142px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
-          탄핵 심판의 갈림길
-        </div>
-        <div className="left-[0px] top-[90px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
-          트럼프 대통령 <br />경제 정책
-        </div>
-        <div className="left-[255px] top-[62px] absolute text-center text-[#666666] text-[11px] font-medium font-['Inter'] leading-none [text-shadow:_0px_4px_4px_rgb(0_0_0_/_0.20)]">
-          현대차에서 <br />전기차 최초공개
+          <div className="text-[#1c283b] text-sm font-bold font-['Noto_Sans_KR']">Lv. {userLevel}</div>
+          <div className="text-[#1c283b] text-sm font-bold font-['Noto_Sans_KR']">{userInfo.nickname || '닉네임'}</div>
         </div>
       </div>
     </div>

@@ -63,31 +63,31 @@ export default function News() {
       });
   }, [activeTab]);
 
-  const handleContentClick = (e: React.MouseEvent, uniqueLink: string) => {
-    e.stopPropagation(); // 부모 요소(div)의 클릭 이벤트를 막음
-    navigate(`/news/detail?link=${encodeURIComponent(uniqueLink)}`);
+  const handleContentClick = (e: React.MouseEvent, uniqueLink: string, rank: number) => {
+    e.stopPropagation();
+    navigate(`/news/detail?link=${encodeURIComponent(uniqueLink)}&rank=${rank}`);
   };
 
   return (
     <main className="w-full flex flex-col items-center relative">
       {/* 상단 탭 */}
       <div className="w-full h-[93px] relative mx-auto">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 text-black text-[20px] font-bold font-['Pretendard'] leading-tight">
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 text-black text-[20px] font-bold leading-tight">
           Top 10 뉴스
         </div>
         <div className="absolute left-1/2 top-[24px] flex items-center space-x-1 -translate-x-1/2 mt-1">
-          <span className="text-black/60 text-[12px] font-normal font-['Pretendard'] leading-tight">
+          <span className="text-black/60 text-[12px] font-normal leading-tight">
             카테고리별 뉴스 하이라이트
           </span>
           <img src={GrayDot} width={13} height={13} alt="gray dot" />
         </div>
-        <div className="absolute top-[66px] flex justify-center w-full text-black/60 text-base font-bold font-['Pretendard'] leading-tight space-x-[24px]">
+        <div className="absolute top-[66px] flex justify-center w-full text-black/60 text-base font-bold leading-tight space-x-[24px]">
           {tabs.map((tab, i) => (
             <div
               key={tab.id}
               ref={el => { tabsRef.current[i] = el; }}
               className={`cursor-pointer ${activeTab === tab.id ? 'text-[#6a4dff]' : ''}`}
-              style={{ width: tab.width ? `${tab.width}px` : '35px', fontSize: '15px' }}
+              style={{ width: tab.width ? `${tab.width}px` : '35px', fontSize: '15px',whiteSpace: 'nowrap', }}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.label}
@@ -152,31 +152,26 @@ export default function News() {
                     </div>
                   </div>
                 </div>
-                {/* 타이틀 h3에 클릭 이벤트와 호버 효과 유지 */}
+
                 <h3
                   className="font-bold text-lg mb-2 w-full max-w-[350px] text-left line-clamp-2
                              cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
-                  onClick={(e) => handleContentClick(e, article.uniqueLink)}
+                  onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
                 >
                   {article.title}
                 </h3>
-                <p className="mb-2 text-sm text-black-600">
-                  {article.createdAt}
-                </p>
+                <p className="mb-2 text-sm text-black-600">{article.createdAt}</p>
                 <div className="w-full max-w-[350px] border-b border-gray-400 mb-4" />
-                {/* 이미지에 클릭 이벤트와 호버 효과 추가 */}
                 <img
                   src={article.thumbnailUrl}
                   alt="썸네일"
-                  className="max-w-[250px] max-h-[150px] mb-3 rounded shadow
-                             cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
-                  onClick={(e) => handleContentClick(e, article.uniqueLink)}
+                  className="max-w-[250px] max-h-[150px] mb-3 rounded shadow cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
+                  onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
                 />
-                {/* 본문 p에 클릭 이벤트와 호버 효과 추가 */}
                 <p
                   className="text-sm line-clamp-5 text-center overflow-hidden
                              cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
-                  onClick={(e) => handleContentClick(e, article.uniqueLink)}
+                  onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
                 >
                   {article.content}
                 </p>

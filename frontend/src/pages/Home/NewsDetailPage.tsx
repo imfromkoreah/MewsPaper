@@ -11,25 +11,26 @@ import LikeOffIcon from '../../assets/svg/like_off.svg';
 import DisLikeOffIcon from '../../assets/svg/dislike_off.svg';
 import ClipOffIcon from '../../assets/svg/clip_off.svg';
 
+const tabs = [
+  { id: 'politics', label: '정치', categoryId: 100 },
+  { id: 'economy', label: '경제', categoryId: 101 },
+  { id: 'society', label: '사회', categoryId: 102 },
+  { id: 'culture', label: '생활/문화', categoryId: 103 },
+  { id: 'world', label: '세계', categoryId: 104 },
+  { id: 'it', label: 'IT/과학', categoryId: 105 },
+];
+
 export default function NewsDetailPage() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const uniqueLink = queryParams.get('link');
+  const rank = queryParams.get('rank'); // 리스트에서 전달된 순위
   const navigate = useNavigate();
 
   const [news, setNews] = useState<any | null>(null);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
   const [clipped, setClipped] = useState(false);
-
-  const tabs = [
-    { id: 'politics', label: '정치', categoryId: 100 },
-    { id: 'economy', label: '경제', categoryId: 101 },
-    { id: 'society', label: '사회', categoryId: 102 },
-    { id: 'culture', label: '생활/문화', categoryId: 103 },
-    { id: 'world', label: '세계', categoryId: 104 },
-    { id: 'it', label: 'IT/과학', categoryId: 105 },
-  ];
 
   useEffect(() => {
     if (!uniqueLink) return;
@@ -99,7 +100,8 @@ export default function NewsDetailPage() {
           <div className="absolute left-5 top-0">
             <div className="px-3 py-1 bg-[#f9f5ff] rounded-2xl">
               <div className="text-[#6840c6] text-sm font-medium">
-                {news.categoryId ? tabs.find(t => t.categoryId === news.categoryId)?.label : '뉴스'} <span className="font-bold">1위</span>
+                {news.categoryId ? tabs.find(t => t.categoryId === news.categoryId)?.label : '뉴스'}{' '}
+                <span className="font-bold">{rank || 1}위</span>
               </div>
             </div>
           </div>
