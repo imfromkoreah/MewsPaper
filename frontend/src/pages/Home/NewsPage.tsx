@@ -18,6 +18,7 @@ type Article = {
   uniqueLink: string;
   title: string;
   content: string;
+  summary?: string;
   categoryId: number;
   source: string;
   publishedDate: string;
@@ -87,7 +88,11 @@ export default function News() {
               key={tab.id}
               ref={el => { tabsRef.current[i] = el; }}
               className={`cursor-pointer ${activeTab === tab.id ? 'text-[#6a4dff]' : ''}`}
-              style={{ width: tab.width ? `${tab.width}px` : '35px', fontSize: '15px',whiteSpace: 'nowrap', }}
+              style={{
+                width: tab.width ? `${tab.width}px` : '35px',
+                fontSize: '15px',
+                whiteSpace: 'nowrap',
+              }}
               onClick={() => setActiveTab(tab.id)}
             >
               {tab.label}
@@ -137,13 +142,14 @@ export default function News() {
             {articles.map((article, index) => (
               <div
                 key={article.uniqueLink}
-                className="flex flex-col items-center justify-start bg-[#E4E4E4] shadow-md h-full p-5 box-border"
+                className="flex flex-col items-center justify-start bg-[#E4E4E4]/70 shadow-md h-full p-5 box-border rounded-md"
                 style={{
                   maxWidth: '430px',
                   maxHeight: '490px',
                   backgroundColor: 'transparent',
                 }}
               >
+                {/* 제목 영역 */}
                 <div className="w-full flex justify-start mb-3">
                   <div className="px-3 py-1 bg-[#6B4EFF]/70 rounded-2xl inline-block">
                     <div className="text-[#ffffff] text-sm font-medium">
@@ -160,26 +166,55 @@ export default function News() {
                 >
                   {article.title}
                 </h3>
-                <p className="mb-2 text-sm text-black-600">{article.createdAt}</p>
-                <div className="w-full max-w-[350px] border-b border-gray-400 mb-4" />
+                <p className="mb-2 text-sm text-gray-600">{article.createdAt}</p>
+                <div className="w-full max-w-[350px] border-b border-gray-300 mb-4" />
+
+                {/* 썸네일 */}
                 <img
                   src={article.thumbnailUrl}
                   alt="썸네일"
                   className="max-w-[250px] max-h-[150px] mb-3 rounded shadow cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
                   onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
                 />
-                <p
-                  className="text-sm line-clamp-5 text-center overflow-hidden
+
+                {/* ✅ 간단 요약 (보라색 세로줄이 텍스트 높이에 따라 자동 늘어남) */}
+                <div
+                  className="flex flex-row gap-3 w-full max-w-[330px] mt-4
                              cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
                   onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
                 >
-                  {article.content}
-                </p>
+                  {/* 보라색 세로줄 */}
+                  <div className="w-[5px] bg-[#6a4dff] rounded-full self-stretch flex-shrink-0" />
+
+                  {/* 텍스트 영역 */}
+                  <div className="flex flex-col gap-1 text-left">
+                    <p className="text-sm font-bold text-[#000]">간단 요약🔍</p>
+
+                    {article.summary ? (
+                      <p
+                        className="text-[13px] leading-relaxed text-gray-800 px-1 text-justify
+                                   overflow-hidden text-ellipsis line-clamp-4"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {article.summary}
+                      </p>
+                    ) : (
+                      <p className="text-[13px] text-gray-500 px-1">
+                        요약 준비 중입니다 😺
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </HTMLFlipBook>
         )}
       </div>
+
       <p className="mt-6 mb-10 text-sm text-black font-medium">
         뉴스를 클릭하면 <span className="underline underline-offset-2">상세 페이지</span>로 이동해요 🐱
       </p>

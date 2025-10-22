@@ -291,142 +291,49 @@ const ChatPage = () => {
                 );
 
                 // 뉴스 검색 (GET)
-                const newsRes = await axios.get(`http://localhost:8080/api/search/news?keyword=${encodeURIComponent(lastKeyword)}`);
+                const newsRes = await axios.get(
+                    `http://localhost:8080/api/search/news?keyword=${encodeURIComponent(lastKeyword)}`
+                );
                 const newsList = newsRes.data;
                 setLastFetchedNewsLinks(newsList); // 뉴스 링크 저장
 
-                // 요약 API 호출
-                const summaryRes = await axios.post('http://localhost:8080/api/summarize', newsList);
+                // ✅ 요약문을 DB에서 GET으로 가져오기 (/api/summary)
+                const userId = localStorage.getItem('userId's);
+                const summaryRes = await axios.get('http://localhost:8080/api/summary', {
+                    params: { userId, keyword: lastKeyword }
+                });
                 const summaryText = summaryRes.data.summary;
 
-                const splitSummaryIntoMessages = (text: string): ChatMessageItem[] => {
-                    let cleanText = text.replace('📝 요약: ', '').trim();
-                    const paragraphs = cleanText.split(/\n{2,}/).filter(p => p.trim() !== '');
-                    const messages: ChatMessageItem[] = [];
-                    const maxMessages = 4;
-                    const charsPerMessage = 150;
-
-                    let currentBuffer = '';
-
-                    const addMessageToArray = (msgText: string, isFirst: boolean) => {
-                        if (msgText.trim().length > 0) {
-                            messages.push({
-                                id: performance.now() + messages.length + 100,
-                                sender: 'bot',
-                                type: 'text',
-                                text: msgText.trim(),
-                                isVisible: true,
-                                isLoading: false,
-                                showProfileBefore: isFirst
-                            });
-                        }
-                    };
-
-                    for (let i = 0; i < paragraphs.length; i++) {
-                        const paragraph = paragraphs[i].trim();
-                        if (paragraph === '') continue;
-
-                        const sentences = paragraph.split(/(?<=[.?!])(?=\s+[^0-9a-zA-Z]|$)|(?<=[.?!])(?![\s0-9a-zA-Z])/).filter(s => s.trim() !== '');
-
-                        for (let j = 0; j < sentences.length; j++) {
-                            const sentence = sentences[j].trim();
-                            if (sentence === '') continue;
-
-                            const potentialLength = currentBuffer.length + (currentBuffer.length > 0 ? 1 : 0) + sentence.length;
-
-                            if (potentialLength > charsPerMessage && messages.length < maxMessages - 1) {
-                                addMessageToArray(currentBuffer, messages.length === 0);
-                                currentBuffer = sentence;
-                            } else {
-                                currentBuffer += (currentBuffer.length > 0 ? ' ' : '') + sentence;
-                            }
-                        }
-
-                        if ((i < paragraphs.length - 1 && currentBuffer.length > 0) || (messages.length >= maxMessages - 1 && currentBuffer.length > 0)) {
-                            addMessageToArray(currentBuffer, messages.length === 0);
-                            currentBuffer = '';
-                        }
-                    }
-
-                    if (currentBuffer.length > 0) {
-                        addMessageToArray(currentBuffer, messages.length === 0);
-                    }
-
-                    if (messages.length === 0 || (messages.length === 1 && messages[0].text.length < 50 && cleanText.length > 50)) {
-                        messages.length = 0;
-                        addMessageToArray(cleanText, true);
-                    }
-
-                    if (messages.length > 0) {
-                        messages[0].text = `📝 요약: ${messages[0].text}`;
-                    } else {
-                        messages.push({
-                            id: performance.now() + 100,
-                            sender: 'bot',
-                            type: 'text',
-                            text: `📝 요약: ${summaryText}`,
-                            isVisible: true,
-                            isLoading: false,
-                            showProfileBefore: true
-                        });
-                    }
-                    return messages;
+                // ✅ DB에 저장된 요약문 그대로 표시
+                const botMessage: ChatMessageItem = {
+                    id: performance.now(),
+                    sender: 'bot',
+                    type: 'text',
+                    text: summaryText, // 그대로 사용
+                    isVisible: true,
+                    isLoading: false,
+                    showProfileBefore: true,
                 };
 
-                const newSummaryMessages = splitSummaryIntoMessages(summaryText);
-
-                for (let i = 0; i < newSummaryMessages.length; i++) {
-                    const msg = newSummaryMessages[i];
-                    const loadingMessageId = performance.now() + 3 + i * 2;
-                    const textMessageId = performance.now() + 4 + i * 2;
-
-                    setChatHistory((prev) => [
-                        ...prev,
-                        {
-                            id: loadingMessageId,
-                            sender: 'bot',
-                            type: 'loading',
-                            isLoading: true,
-                            isVisible: false,
-                            showProfileBefore: i === 0,
-                        }
-                    ]);
-
-                    await new Promise(resolve => setTimeout(resolve, 800));
-
-                    setChatHistory((prev) => {
-                        const filteredPrev = prev.filter(m => m.id !== loadingMessageId);
-                        return [
-                            ...filteredPrev,
-                            {
-                                ...msg,
-                                id: textMessageId,
-                                isVisible: true,
-                                isLoading: false,
-                                showProfileBefore: i === 0,
-                            }
-                        ];
-                    });
-
-                    if (i < newSummaryMessages.length - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                }
+                setChatHistory((prev) => [...prev, botMessage]);
 
                 // 요약 완료 후 링크 확인 메시지 및 버튼 표시
                 setTimeout(() => {
-                    setChatHistory((prev) => [...prev, {
-                        id: performance.now() + 500,
-                        sender: 'bot',
-                        type: 'text',
-                        text: '관련 기사 링크를 직접 볼래?',
-                        isVisible: true,
-                        isLoading: false,
-                        showProfileBefore: true, // 새로운 맥락이므로 프로필 다시 표시
-                    }]);
-                    setShowLinkConfirmationButtons(true); // 링크 확인 버튼 표시
-                }, 1000); // 요약 메시지 표시 후 잠시 대기
-                
+                    setChatHistory((prev) => [
+                        ...prev,
+                        {
+                            id: performance.now() + 500,
+                            sender: 'bot',
+                            type: 'text',
+                            text: '관련 기사 링크를 직접 볼래?',
+                            isVisible: true,
+                            isLoading: false,
+                            showProfileBefore: true,
+                        },
+                    ]);
+                    setShowLinkConfirmationButtons(true);
+                }, 1000);
+
             } catch (error) {
                 console.error("뉴스 검색 또는 요약 API 호출 실패:", error);
                 setChatHistory((prev) =>

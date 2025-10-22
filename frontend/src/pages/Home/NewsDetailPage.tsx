@@ -24,29 +24,35 @@ export default function NewsDetailPage() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const uniqueLink = queryParams.get('link');
-  const rank = queryParams.get('rank'); // 리스트에서 전달된 순위
+  const rank = queryParams.get('rank');
   const navigate = useNavigate();
 
   const [news, setNews] = useState<any | null>(null);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
   const [clipped, setClipped] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // ✅ 토스트 자동 사라짐
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   useEffect(() => {
     if (!uniqueLink) return;
 
     const userId = localStorage.getItem('userId');
 
-    // ✅ 뉴스 상세 가져오기
     axios
       .get(`http://localhost:8080/api/news/detail?link=${encodeURIComponent(uniqueLink)}`)
       .then(res => {
-        console.log('📦 뉴스 상세 응답:', res.data);
         setNews(res.data);
       })
       .catch(err => console.error('뉴스 상세 조회 실패:', err));
 
-    // ✅ 로그인되어 있다면 스크랩 여부 확인
     if (userId) {
       axios
         .get(`http://localhost:8080/api/scrap/list?userId=${userId}`)
@@ -67,10 +73,11 @@ export default function NewsDetailPage() {
     setDisliked(prev => !prev);
     if (liked) setLiked(false);
   };
+
   const toggleClip = () => {
     if (!news) return;
     const userId = localStorage.getItem('userId');
-    if (!userId) return alert('로그인이 필요합니다.');
+    if (!userId) return setToast({ message: '로그인이 필요합니다 🐾', type: 'error' });
 
     const apiUrl = clipped
       ? `http://localhost:8080/api/scrap/remove?userId=${userId}&uniqueLink=${encodeURIComponent(news.uniqueLink)}`
@@ -80,11 +87,17 @@ export default function NewsDetailPage() {
       .post(apiUrl)
       .then(() => {
         setClipped(prev => !prev);
-        alert(!clipped ? '스크랩 완료' : '스크랩 취소 완료');
+        setToast({
+          message: clipped ? '스크랩이 취소되었어요 😿' : '스크랩 완료! 😺',
+          type: 'success',
+        });
       })
       .catch(err => {
         console.error('스크랩 실패:', err);
-        alert(err.response?.data?.message || '스크랩 실패');
+        setToast({
+          message: err.response?.data?.message || '스크랩에 실패했어요 😿',
+          type: 'error',
+        });
       });
   };
 
@@ -102,11 +115,24 @@ export default function NewsDetailPage() {
   }
 
   return (
-    <div className="w-full h-screen flex justify-center bg-gray-100">
+    <div className="w-full h-screen flex justify-center bg-gray-100 relative">
+      {/* ✅ 토스트 메시지 */}
+      {toast && (
+        <div
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl shadow-md text-white text-sm font-semibold transition-all duration-500 ${
+            toast.type === 'success' ? 'bg-[#6a4dff]' : 'bg-[#ff5f5f]'
+          } animate-fadeIn`}
+        >
+          {toast.message}
+        </div>
+      )}
+
       <div className="w-full max-w-md h-full flex flex-col border border-gray-200 rounded shadow-sm bg-white">
         <Header title="뉴스 확대" onBack={handleBack} />
 
+        {/* ✅ 스크롤 가능한 영역 */}
         <div className="flex-1 overflow-auto relative px-5 pt-4 pb-20 mt-3">
+          {/* 카테고리 라벨 */}
           <div className="absolute left-5 top-0">
             <div className="px-3 py-1 bg-[#f9f5ff] rounded-2xl">
               <div className="text-[#6840c6] text-sm font-medium">
@@ -116,7 +142,7 @@ export default function NewsDetailPage() {
             </div>
           </div>
 
-          {/* ✅ 제목 + 날짜 */}
+          {/* 제목 + 날짜 */}
           <div className="mb-4 pt-4">
             <div className="font-['Inter'] text-[24px] font-bold text-[#090a0a] tracking-wider mt-1">
               {news.title}
@@ -124,35 +150,37 @@ export default function NewsDetailPage() {
             <div className="text-sm text-[#090a0a] mt-1">{news.publishedDate || ''}</div>
           </div>
 
-          {/* ✅ 썸네일 */}
+          {/* 썸네일 */}
           {news.thumbnailUrl && news.thumbnailUrl !== '이미지 없음' && (
             <div className="-mx-5 mt-4">
               <img
                 src={news.thumbnailUrl}
                 alt="뉴스 이미지"
-                className="w-full max-h-[400px] object-contain"
+                className="w-full object-contain"
               />
             </div>
           )}
 
-          {/* ✅ 간단 요약 (요약 없을 시 안내 문구 표시) */}
-          <div className="flex gap-3 px-4 mt-4">
-            <div className="w-[8px] bg-[#6a4dff] rounded-full" />
-            <div className="space-y-1">
-              <p className="text-xs font-bold">간단 요약🔍</p>
+          {/* ✅ 간단 요약 (전체 표시, 높이 제한 없음) */}
+          <div className="flex flex-row gap-3 px-4 mt-5">
+            {/* 보라색 세로줄 */}
+            <div className="w-[5px] bg-[#6a4dff] rounded-full self-stretch flex-shrink-0" />
+            {/* 텍스트 */}
+            <div className="flex flex-col gap-2 text-left">
+              <p className="text-sm font-bold text-[#000]">간단 요약🔍</p>
               {news.summary ? (
-                <p className="text-xs text-black px-3 whitespace-pre-line">
+                <p className="text-sm text-black px-1 text-justify leading-relaxed whitespace-pre-line">
                   {news.summary}
                 </p>
               ) : (
-                <p className="text-xs text-gray-500 px-3">
+                <p className="text-sm text-gray-500 px-1">
                   요약 준비 중입니다 😺
                 </p>
               )}
             </div>
           </div>
 
-          {/* ✅ 안내 박스 */}
+          {/* 안내 박스 */}
           <div className="flex items-center gap-4 px-10 py-4 bg-[#cacaca]/20 rounded-xl mt-5 mb-5">
             <img src={SummaryInfoIcon} alt="요약 아이콘" className="w-6 h-6" />
             <p className="text-xs text-black leading-snug">
@@ -162,13 +190,16 @@ export default function NewsDetailPage() {
             </p>
           </div>
 
-          {/* ✅ 본문 */}
-          <div className="text-sm text-[#090a0a] whitespace-pre-line">
+          {/* 본문 */}
+          <div
+            className="text-[14px] text-[#090a0a] leading-relaxed text-justify whitespace-pre-line px-1 mt-3 mb-6"
+          >
             {news.content}
           </div>
+
         </div>
 
-        {/* ✅ 하단 버튼 (좋아요 / 스크랩 / 싫어요) */}
+        {/* ✅ 하단 버튼 */}
         <nav className="h-14 bg-white flex justify-around items-center border-t shadow-[0_-2px_4px_rgba(0,0,0,0.05)]">
           <button onClick={toggleLike} className="focus:outline-none">
             <img src={liked ? LikeOnIcon : LikeOffIcon} alt="좋아요" className="h-6 w-6" />
@@ -184,3 +215,13 @@ export default function NewsDetailPage() {
     </div>
   );
 }
+
+/* ✅ CSS 애니메이션 (전역 스타일에 추가)
+.fadeIn {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+*/
