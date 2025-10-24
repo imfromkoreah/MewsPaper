@@ -298,7 +298,7 @@ const ChatPage = () => {
                 setLastFetchedNewsLinks(newsList); // 뉴스 링크 저장
 
                 // ✅ 요약문을 DB에서 GET으로 가져오기 (/api/summary)
-                const userId = localStorage.getItem('userId's);
+                const userId = localStorage.getItem('userId');
                 const summaryRes = await axios.get('http://localhost:8080/api/summary', {
                     params: { userId, keyword: lastKeyword }
                 });

@@ -12,4 +12,5 @@ import lombok.ToString;
 public class EmailLoginRequest {
     private String email;
     private String password;
+    private String fcmtoken;
 }

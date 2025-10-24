@@ -27,7 +27,7 @@ public class LoginController {
     @PostMapping("/kakao")
     public ResponseEntity<LoginResponse> kakaoLogin(@RequestBody AccessTokenRequest requestBody) {
         String kakaoAccessToken = requestBody.getAccessToken();
-
+        
         if (kakaoAccessToken == null || kakaoAccessToken.isEmpty()) {
             return ResponseEntity.badRequest().body(new LoginResponse(false, "카카오 액세스 토큰이 필요합니다.", null, null, null)); // redirectUrl null 추가
         }

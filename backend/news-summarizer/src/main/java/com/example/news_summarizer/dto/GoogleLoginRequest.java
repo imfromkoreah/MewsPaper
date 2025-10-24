@@ -12,4 +12,5 @@ import lombok.ToString;
 public class GoogleLoginRequest {
     private String code;  // Google 인증 코드를 받기 위한 필드
     private String state; // CSRF 방지 및 상태 유지를 위한 필드
+    private String fcmToken; // 💡 이 필드를 추가합니다.
 }

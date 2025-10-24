@@ -33,6 +33,9 @@ public class NotificationSetting {
 
     @Column(name = "is_active", nullable = false) // DB의 is_active 컬럼과 매핑 (TINYINT(1) -> Boolean)
     private Boolean isActive = true; // 기본값 TRUE (DB DEFAULT 1에 해당)
+    
+    @Column(name = "fcm_token")
+    private String fcmToken; // 필드 이름이 userFcmToken 입니다.
 
     // @Column(name = "created_at", nullable = false, updatable = false) // DB의 created_at 컬럼과 매핑
     // private LocalDateTime createdAt;

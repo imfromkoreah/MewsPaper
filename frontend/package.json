@@ -11,12 +11,13 @@
   },
   "dependencies": {
     "axios": "^1.9.0",
+    "firebase": "^12.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-pageflip": "^2.0.3",
     "react-router-dom": "^7.6.0",
     "styled-components": "^6.1.18",
-    "swiper": "^11.2.8"
+    "swiper": "^11.2.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

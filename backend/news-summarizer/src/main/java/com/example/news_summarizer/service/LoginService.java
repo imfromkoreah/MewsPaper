@@ -161,7 +161,7 @@ public class LoginService {
         String id = responseNode.get("id").asText();
         String email = responseNode.get("email") != null ? responseNode.get("email").asText() : null;
         String name = responseNode.get("name") != null ? responseNode.get("name").asText() : null; // 네이버는 name 필드도 제공
-
+       
         // socialId와 socialProvider로 사용자를 찾습니다.
         Optional<User> existingUser = loginRepository.findBySocialIdAndSocialProvider(id, SocialProvider.NAVER);
 
@@ -224,7 +224,6 @@ public class LoginService {
         String socialId = googleUserProfile.has("sub") ? googleUserProfile.get("sub").asText() : null;
         String email = googleUserProfile.has("email") ? googleUserProfile.get("email").asText() : null;
         String name = googleUserProfile.has("name") ? googleUserProfile.get("name").asText() : null;
-
         Optional<User> existingUser = loginRepository.findBySocialIdAndSocialProvider(socialId, SocialProvider.GOOGLE);
 
         User user;

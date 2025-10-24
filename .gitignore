@@ -3,3 +3,12 @@ backend/news-summarizer/src/main/resources/application-secret.properties
 
 # node_modules (프론트엔드/백엔드 모두)
 node_modules/
+backend/news-summarizer/UPGRADE_JAVA_TO_21.md
+backend/news-summarizer/build.gradle
+backend/news-summarizer/gradle.properties
+backend/news-summarizer/build.gradle
+backend/.vscode/settings.json
+backend/.vscode/settings.json
+backend/news-summarizer/build.gradle
+frontend/package-lock.json
+frontend/package.json
