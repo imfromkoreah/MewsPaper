@@ -22,7 +22,7 @@ export default function MyPage() {
 
   const [selectedTab, setSelectedTab] = useState<'attendance' | 'scrap'>('attendance');
   const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
-  const [userInfo, setUserInfo] = useState({ id: '', nickname: '', email: '' });
+  const [userInfo, setUserInfo] = useState({ id: '', nickname: '사용자', email: 'loading@me.com' });
 
   const [loadingStamp, setLoadingStamp] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
@@ -40,28 +40,34 @@ export default function MyPage() {
   const handleBack = () => navigate(-1);
   const getTodayString = () => new Date().toISOString().split('T')[0];
 
+  /** ✅ 데이터 비동기 병렬 요청 (렌더 블로킹 없음) */
   useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
     const fetchUserData = async () => {
-      const userId = localStorage.getItem('userId');
-      if (!userId) return console.error('로그인 정보가 존재하지 않습니다.');
-
       try {
-        const userRes = await axios.get(`http://localhost:8080/api/user/${userId}`);
-        setUserInfo(userRes.data);
-        localStorage.setItem('nickname', userRes.data.nickname);
+        const [userRes, attendanceRes] = await Promise.all([
+          axios.get(`http://localhost:8080/api/user/${userId}`),
+          axios.get(`http://localhost:8080/api/user/attendance/${userId}`)
+        ]);
 
-        const attendanceRes = await axios.get(`http://localhost:8080/api/user/attendance/${userId}`);
+        if (userRes.data) {
+          setUserInfo(userRes.data);
+          localStorage.setItem('nickname', userRes.data.nickname);
+        }
+
         if (attendanceRes.data.success && attendanceRes.data.data) {
           setAttendanceDates(attendanceRes.data.data);
-        } else {
-          console.error('출석 날짜 불러오기 실패:', attendanceRes.data.message);
         }
       } catch (err) {
         console.error('데이터 불러오기 실패:', err);
       }
     };
 
-    fetchUserData();
+    // 렌더 먼저 → 50ms 후 비동기 요청 (UX 자연스럽게)
+    const timeout = setTimeout(fetchUserData, 50);
+    return () => clearTimeout(timeout);
   }, []);
 
   const handleStampClick = async () => {
@@ -84,21 +90,21 @@ export default function MyPage() {
       });
 
       const data = await res.json();
+      const today = getTodayString();
 
       if (res.ok) {
-        const today = getTodayString();
         if (!attendanceDates.includes(today)) {
           setAttendanceDates((prev) => [...prev, today]);
-          setPopupMessage(data.message || '출석 도장이 성공적으로 기록되었습니다! 🐾');
+          setPopupMessage(data.message || '출석 도장이 찍혔어요! 🐾');
         } else {
-          setPopupMessage('오늘은 이미 출석 도장을 찍었어요! 🐾');
+          setPopupMessage('오늘은 이미 출석했어요 🐾');
         }
       } else {
         setPopupMessage(`출석 실패: ${data.message}`);
       }
     } catch (err) {
       console.error(err);
-      setPopupMessage('서버 오류로 출석에 실패했습니다.');
+      setPopupMessage('서버 오류로 출석 실패');
     } finally {
       setShowPopup(true);
       setLoadingStamp(false);
@@ -129,13 +135,14 @@ export default function MyPage() {
       }
     } catch (err) {
       console.error('닉네임 변경 오류:', err);
-      setPopupMessage('서버 오류로 닉네임 변경에 실패했습니다.');
+      setPopupMessage('서버 오류로 닉네임 변경 실패');
       setShowPopup(true);
     }
   };
 
+  /** ✅ 즉시 렌더 구조 */
   return (
-    <div className="w-full h-screen flex justify-center bg-gray-100">
+    <div className="w-full h-screen flex justify-center bg-gray-100 animate-fadeIn">
       <div className="w-full max-w-md h-full flex flex-col bg-white border shadow-sm rounded relative">
         <Header title="마이페이지" onBack={handleBack} />
 
@@ -143,7 +150,7 @@ export default function MyPage() {
         <div className="relative w-[335px] h-[172px] mx-auto mt-4">
           <div className="absolute top-0 left-[11px] w-[313px] h-[60px] flex justify-between items-start">
             <div className="flex flex-col gap-1">
-              <div className="text-base font-bold flex items-center gap-2">
+              <div className="text-base font-bold flex items-center gap-2 transition-all duration-200">
                 {userInfo.nickname}
                 <button
                   className="text-xs text-purple-600 underline"
@@ -155,14 +162,14 @@ export default function MyPage() {
                   수정
                 </button>
               </div>
-              <div className="px-2.5 py-0.5 bg-emerald-50 rounded text-sm text-[#090a0a] truncate max-w-[200px]">
+              <div className="px-2.5 py-0.5 bg-emerald-50 rounded text-sm text-[#090a0a] truncate max-w-[200px] transition-all duration-200">
                 @{userInfo.email}
               </div>
             </div>
             <img
               src={profileImages[selectedProfileIndex]}
               alt="프로필"
-              className="w-[60px] h-[60px]"
+              className="w-[60px] h-[60px] transition-transform hover:scale-105"
             />
           </div>
 
@@ -171,7 +178,7 @@ export default function MyPage() {
             className="w-[335px] absolute top-[142px] left-1/2 transform -translate-x-1/2 inline-flex flex-col gap-2 items-center"
             style={{ fontFamily: 'Pretendard, sans-serif' }}
           >
-            <div className="text-center text-sm text-[#090a0a] leading-tight">
+            <div className="text-center text-sm text-[#090a0a] leading-tight transition-opacity duration-300">
               <span className="font-bold">{userInfo.nickname}</span>
               <span className="font-normal"> 레벨업까지 </span>
               <span className="font-bold">5개의 발바닥</span>
@@ -193,7 +200,7 @@ export default function MyPage() {
               <span className="text-sm font-medium">{loadingStamp ? '처리 중...' : '출석도장 찍기'}</span>
             </button>
             <button
-              className="w-[142px] px-4 py-2.5 bg-[#7e56d8] text-white rounded-lg shadow"
+              className="w-[142px] px-4 py-2.5 bg-[#7e56d8] text-white rounded-lg shadow hover:bg-[#6b49c9] transition-all"
               onClick={() => setShowProfilePopup(true)}
             >
               프로필 바꾸기
@@ -213,7 +220,7 @@ export default function MyPage() {
           )}
         </div>
 
-        {/* 프로필 변경 팝업 */}
+        {/* 팝업들 */}
         {showProfilePopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
             <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg">
@@ -245,7 +252,6 @@ export default function MyPage() {
           </div>
         )}
 
-        {/* 닉네임 수정 팝업 */}
         {showNicknameEditPopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
             <div className="bg-white rounded-xl p-6 w-80 text-center shadow-lg">
@@ -274,7 +280,6 @@ export default function MyPage() {
           </div>
         )}
 
-        {/* 커스텀 팝업 */}
         {showPopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
             <div
@@ -293,6 +298,18 @@ export default function MyPage() {
           </div>
         )}
       </div>
+
+      <style>
+        {`
+          @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.4s ease-out;
+          }
+        `}
+      </style>
     </div>
   );
 }

@@ -290,86 +290,120 @@ const ChatPage = () => {
                     )
                 );
 
-                // 뉴스 검색 (GET)
-                const newsRes = await axios.get(
-                    `http://localhost:8080/api/search/news?keyword=${encodeURIComponent(lastKeyword)}`
-                );
-                const newsList = newsRes.data;
-                setLastFetchedNewsLinks(newsList); // 뉴스 링크 저장
+// 뉴스 검색 (GET)
+const newsRes = await axios.get(
+  `http://localhost:8080/api/search/news?keyword=${encodeURIComponent(lastKeyword)}`
+);
+const newsList = newsRes.data;
+setLastFetchedNewsLinks(newsList); // 뉴스 링크 저장
 
-                // ✅ 요약문을 DB에서 GET으로 가져오기 (/api/summary)
-                const userId = localStorage.getItem('userId');
-                const summaryRes = await axios.get('http://localhost:8080/api/summary', {
-                    params: { userId, keyword: lastKeyword }
-                });
-                const summaryText = summaryRes.data.summary;
+// ✅ 요약문을 DB에서 GET으로 가져오기 (/api/summary)
+const userId = localStorage.getItem('userId');
+const summaryRes = await axios.get('http://localhost:8080/api/summary', {
+  params: { userId, keyword: lastKeyword },
+});
+const summaryText = summaryRes.data.summary;
 
-                // ✅ DB에 저장된 요약문 그대로 표시
-                const botMessage: ChatMessageItem = {
-                    id: performance.now(),
-                    sender: 'bot',
-                    type: 'text',
-                    text: summaryText, // 그대로 사용
-                    isVisible: true,
-                    isLoading: false,
-                    showProfileBefore: true,
-                };
+// ✅ 요약문을 문장 단위로 분리 후 3문장씩 묶어서 순차 출력
+if (summaryText && summaryText.trim().length > 0) {
+  // 1️⃣ 문장 단위로 분리 (. ! ? 기준)
+  const summaryParts = summaryText
+    .split(/(?<=[.!?])\s+/)
+    .filter((s) => s.trim().length > 0);
 
-                setChatHistory((prev) => [...prev, botMessage]);
+  // 2️⃣ 3문장씩 묶기
+  const groupedSummaries: string[] = [];
+  for (let i = 0; i < summaryParts.length; i += 3) {
+    groupedSummaries.push(summaryParts.slice(i, i + 3).join(' '));
+  }
 
-                // 요약 완료 후 링크 확인 메시지 및 버튼 표시
-                setTimeout(() => {
-                    setChatHistory((prev) => [
-                        ...prev,
-                        {
-                            id: performance.now() + 500,
-                            sender: 'bot',
-                            type: 'text',
-                            text: '관련 기사 링크를 직접 볼래?',
-                            isVisible: true,
-                            isLoading: false,
-                            showProfileBefore: true,
-                        },
-                    ]);
-                    setShowLinkConfirmationButtons(true);
-                }, 1000);
+  // 3️⃣ 묶은 문단 순차 출력 (1.8초 간격)
+  groupedSummaries.forEach((chunk, idx) => {
+    setTimeout(() => {
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          id: performance.now() + idx,
+          sender: 'bot',
+          type: 'text',
+          text: chunk.trim(),
+          isVisible: true,
+          isLoading: false,
+          showProfileBefore: idx === 0, // 첫 말풍선만 프로필 표시
+        },
+      ]);
+    }, idx * 1800);
+  });
 
-            } catch (error) {
-                console.error("뉴스 검색 또는 요약 API 호출 실패:", error);
-                setChatHistory((prev) =>
-                    prev.map((msg) =>
-                        msg.id === loadingId1
-                            ? {
-                                ...msg,
-                                type: 'text',
-                                text: '뉴스를 가져오거나 요약하는 데 실패했어. 다시 시도해줘!',
-                                isLoading: false,
-                                isVisible: true
-                            }
-                            : msg
-                    )
-                );
-                setInputVisible(true);
+  // 4️⃣ 마지막 말풍선 출력 후 '관련 기사 링크' 메시지 표시
+  const totalDelay = groupedSummaries.length * 1800 + 1000;
+  setTimeout(() => {
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        id: performance.now() + 500,
+        sender: 'bot',
+        type: 'text',
+        text: '관련 기사 링크를 직접 볼래?',
+        isVisible: true,
+        isLoading: false,
+        showProfileBefore: true,
+      },
+    ]);
+    setShowLinkConfirmationButtons(true);
+  }, totalDelay);
+} else {
+  // 요약문이 없을 경우 기본 응답
+  const botMessage: ChatMessageItem = {
+    id: performance.now(),
+    sender: 'bot',
+    type: 'text',
+    text: '요약된 내용이 아직 없어요. 다시 시도해볼래?',
+    isVisible: true,
+    isLoading: false,
+    showProfileBefore: true,
+  };
+  setChatHistory((prev) => [...prev, botMessage]);
+}
+
+} catch (error) {
+  console.error("뉴스 검색 또는 요약 API 호출 실패:", error);
+  setChatHistory((prev) =>
+    prev.map((msg) =>
+      msg.id === loadingId1
+        ? {
+            ...msg,
+            type: 'text',
+            text: '뉴스를 가져오거나 요약하는 데 실패했어. 다시 시도해줘!',
+            isLoading: false,
+            isVisible: true,
+          }
+        : msg
+    )
+  );
+  setInputVisible(true);
+}
+} else {
+  // '아니야' 답변
+  setTimeout(() => {
+    setChatHistory((prev) =>
+      prev.map((msg) =>
+        msg.id === loadingId1
+          ? {
+              ...msg,
+              type: 'text',
+              text: '아니구나! 다시 정확한 키워드를 입력해 줄래?',
+              isLoading: false,
+              isVisible: true,
             }
-        } else { // '아니야' 답변
-            setTimeout(() => {
-                setChatHistory((prev) =>
-                    prev.map((msg) =>
-                        msg.id === loadingId1
-                            ? {
-                                ...msg,
-                                type: 'text',
-                                text: '아니구나! 다시 정확한 키워드를 입력해 줄래?',
-                                isLoading: false,
-                                isVisible: true
-                            }
-                            : msg
-                    )
-                );
-                setInputVisible(true);
-            }, 1500);
-        }
-    };
+          : msg
+      )
+    );
+    setInputVisible(true);
+  }, 1500);
+}
+};
+
 
     const onConfirmLinkReply = async (reply: string) => {
         const confirmMsg: ChatMessageItem = {
@@ -382,64 +416,73 @@ const ChatPage = () => {
         setShowLinkConfirmationButtons(false); // 링크 확인 버튼 숨기기
         setInputVisible(false); // 사용자 응답 후 입력창 비활성화
 
-        if (reply === '응!') {
-            // 뉴스 링크들을 순차적으로 표시
-            for (let i = 0; i < lastFetchedNewsLinks.length; i++) {
-                const news = lastFetchedNewsLinks[i];
-                const loadingMessageId = performance.now() + 600 + i * 2;
-                const textMessageId = performance.now() + 601 + i * 2;
+if (reply === '응!') {
+  // ✅ 뉴스 중 가장 최신 3개만 선택
+  const recentNews = lastFetchedNewsLinks.slice(0, 3);
 
-                setChatHistory((prev) => [
-                    ...prev,
-                    {
-                        id: loadingMessageId,
-                        sender: 'bot',
-                        type: 'loading',
-                        isLoading: true,
-                        isVisible: false,
-                        showProfileBefore: i === 0, // 첫 번째 링크 메시지에만 프로필 표시
-                    }
-                ]);
+  // 뉴스 링크들을 순차적으로 표시
+  for (let i = 0; i < recentNews.length; i++) {
+    const news = recentNews[i];
+    const loadingMessageId = performance.now() + 600 + i * 2;
+    const textMessageId = performance.now() + 601 + i * 2;
 
-                await new Promise(resolve => setTimeout(resolve, 800)); // 로딩 애니메이션 시간
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        id: loadingMessageId,
+        sender: 'bot',
+        type: 'loading',
+        isLoading: true,
+        isVisible: false,
+        showProfileBefore: i === 0, // 첫 번째 링크 메시지에만 프로필 표시
+      },
+    ]);
 
-                setChatHistory((prev) => {
-                    const filteredPrev = prev.filter(m => m.id !== loadingMessageId);
-                    return [
-                        ...filteredPrev,
-                        {
-                            id: textMessageId,
-                            sender: 'bot',
-                            type: 'link', // type을 'link'로 설정
-                            text: news.title, // 링크 텍스트는 뉴스 제목
-                            link: news.url, // 실제 링크 URL
-                            isVisible: true,
-                            isLoading: false,
-                            showProfileBefore: i === 0,
-                        }
-                    ];
-                });
+    await new Promise((resolve) => setTimeout(resolve, 800)); // 로딩 애니메이션 시간
 
-                if (i < lastFetchedNewsLinks.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 500)); // 각 링크 메시지 사이 간격
-                }
-            }
-            // 모든 링크가 표시된 후 입력창 활성화
-            setInputVisible(true);
-        } else { // '아니야' 답변
-            setTimeout(() => {
-                setChatHistory((prev) => [...prev, {
-                    id: performance.now() + 700,
-                    sender: 'bot',
-                    type: 'text',
-                    text: '알겠어! 다른 궁금한 점이 있다면 언제든지 물어봐!',
-                    isVisible: true,
-                    isLoading: false,
-                    showProfileBefore: true,
-                }]);
-                setInputVisible(true);
-            }, 1500);
-        }
+    setChatHistory((prev) => {
+      const filteredPrev = prev.filter((m) => m.id !== loadingMessageId);
+      return [
+        ...filteredPrev,
+        {
+          id: textMessageId,
+          sender: 'bot',
+          type: 'link', // type을 'link'로 설정
+          text: news.title, // 링크 텍스트는 뉴스 제목
+          link: news.url, // 실제 링크 URL
+          isVisible: true,
+          isLoading: false,
+          showProfileBefore: i === 0,
+        },
+      ];
+    });
+
+    if (i < recentNews.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500)); // 각 링크 메시지 사이 간격
+    }
+  }
+
+  // 모든 링크가 표시된 후 입력창 활성화
+  setInputVisible(true);
+} else {
+  // '아니야' 답변
+  setTimeout(() => {
+    setChatHistory((prev) => [
+      ...prev,
+      {
+        id: performance.now() + 700,
+        sender: 'bot',
+        type: 'text',
+        text: '알겠어! 다른 궁금한 점이 있다면 언제든지 물어봐!',
+        isVisible: true,
+        isLoading: false,
+        showProfileBefore: true,
+      },
+    ]);
+    setInputVisible(true);
+  }, 1500);
+}
+
     };
 
 

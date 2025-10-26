@@ -2,7 +2,6 @@ package com.example.news_summarizer.service;
 
 import com.example.news_summarizer.entity.SearchNews;
 import com.example.news_summarizer.repository.SearchNewsRepository;
-import com.example.news_summarizer.service.SearchSummaryService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.service.OpenAiService;
@@ -193,22 +192,24 @@ public class SearchNewsService {
         return searchNewsRepository.findByKeywordOrderByPublishedDateDesc(keyword, pageable);
     }
 
+    /** ✅ 프롬프트 수정된 버전 — 대화체 스타일로 자연스럽게 */
     @SuppressWarnings("BusyWait")
     public String summarizeArticles(List<SearchNews> articles) {
         if (articles == null || articles.isEmpty()) return "요약할 뉴스가 없습니다.";
 
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append(
-                "아래 뉴스 기사들을 읽고, **따뜻한 뉴스레터처럼 핵심만 부드럽게 정리해 줘.** ☕️\n" +
-                        "비슷한 내용은 하나로 묶고, 사건이 왜 일어났는지도 자연스럽게 이어 줘.\n" +
-                        "말투는 딱딱하지 않게, 친구에게 근황 전하듯 말해 줘. 💬\n" +
-                        "‘~더라구’, ‘~래’, ‘~했어’, ‘~하더라’ 같은 말투로 자연스럽게 써 줘.\n" +
-                        "너무 감정적이진 않되, 따뜻한 공감 한 스푼은 괜찮아. ✨\n" +
-                        "문장은 짧게, 리듬감 있게, 읽기 편하게 써 줘.\n" +
-                        "👉 전체 요약은 **300자 이내**, 뉴스레터 한 꼭지처럼 깔끔하게 마무리해 줘.\n\n" +
-                        "자, 그럼 아래 기사들을 보고 센스 있게 정리해 줘👇\n\n"
+                "이제부터 너는 ✨‘따뜻한 뉴스레터 작가’✨야.\n" +
+                        "아래 기사 내용을 읽고, 친구한테 얘기하듯 자연스럽게 정리해 줘 💬\n" +
+                        "딱딱한 뉴스처럼 쓰지 말고, 요즘 일상 얘기하듯 편하게 써 줘.\n" +
+                        "핵심 내용은 빠뜨리지 말되, 정보 전달보다 ‘이야기하듯’ 말해 줘.\n" +
+                        "예를 들어:\n" +
+                        "👉 ‘요즘 이런 일 있었대~’, ‘근데 알고 보니까~’, ‘그래서 다들 놀랐다더라구’ 같은 식으로!\n" +
+                        "문장은 짧고 리듬감 있게, 문단은 간결하게.\n" +
+                        "감탄사나 리액션(‘헐’, ‘대박’, ‘진짜?’)은 살짝만.\n" +
+                        "전체 길이는 300자 이내로, 따뜻한 뉴스레터 한 꼭지처럼 마무리해 줘 ☕️\n\n" +
+                        "📰 아래 기사들을 참고해서 정리해 줘 👇\n\n"
         );
-
 
         for (SearchNews article : articles) {
             promptBuilder.append("제목: ").append(article.getTitle()).append("\n");
@@ -220,7 +221,7 @@ public class SearchNewsService {
         ChatCompletionRequest request = ChatCompletionRequest.builder()
                 .model("gpt-3.5-turbo")
                 .messages(List.of(
-                        new ChatMessage("system", "당신은 뉴스 요약 전문가입니다."),
+                        new ChatMessage("system", "너는 사람들에게 편안하게 뉴스를 이야기해 주는 에디터야."),
                         new ChatMessage("user", prompt)
                 ))
                 .maxTokens(500)

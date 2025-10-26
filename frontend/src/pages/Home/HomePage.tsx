@@ -157,11 +157,11 @@ const HomePage = () => {
       </div>
 
       {/* 캐릭터 영역 */}
-      <div className="relative flex flex-col items-center mt-12">
+      <div className="relative flex flex-col items-center mt-8">
         <img
           src={profileImages[profileIndex]}
           alt="대표 이미지"
-          className="w-[200px] h-auto animate-float hover:animate-wiggle cursor-pointer
+          className="w-[170px] h-auto animate-float hover:animate-wiggle cursor-pointer
                      drop-shadow-[0_4px_10px_rgba(0,0,0,0.15)] transition-transform"
         />
 
