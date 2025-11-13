@@ -1,14 +1,46 @@
-# secret config
-backend/news-summarizer/src/main/resources/application-secret.properties
+# ===========================
+# Global
+# ===========================
+.DS_Store
+.vscode/
+.idea/
 
-# node_modules (프론트엔드/백엔드 모두)
+# ===========================
+# Node (Frontend + Backend)
+# ===========================
 node_modules/
-backend/news-summarizer/UPGRADE_JAVA_TO_21.md
-backend/news-summarizer/build.gradle
-backend/news-summarizer/gradle.properties
-backend/news-summarizer/build.gradle
-backend/.vscode/settings.json
-backend/.vscode/settings.json
-backend/news-summarizer/build.gradle
-frontend/package-lock.json
-frontend/package.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===========================
+# Frontend build
+# ===========================
+frontend/dist/
+frontend/.vite/
+frontend/.next/
+frontend/out/
+
+# ===========================
+# Backend (Spring Boot)
+# ===========================
+backend/news-summarizer/build/
+backend/news-summarizer/out/
+backend/news-summarizer/.gradle/
+backend/news-summarizer/logs/
+
+# ===========================
+# Secret / Credentials (절대 올리면 안 되는 부분)
+# ===========================
+backend/news-summarizer/src/main/resources/application-secret.properties
+backend/news-summarizer/src/main/resources/*.json
+backend/news-summarizer/src/main/resources/firebase-service-account.json
+
+*.env
+.env.*
+.env.local
+
+# ===========================
+# OS files
+# ===========================
+Thumbs.db

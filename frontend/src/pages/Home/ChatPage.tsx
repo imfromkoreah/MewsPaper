@@ -11,9 +11,9 @@ import profileImg6 from '../../assets/character/mewsdoc6.png';
 interface ChatMessageItem {
     id: number;
     sender: 'bot' | 'user';
-    type: 'text' | 'loading' | 'link'; // 'link' 타입 추가
+    type: 'text' | 'loading' | 'link';
     text?: string;
-    link?: string; // 링크 URL 필드 추가
+    link?: string;
     delay?: number;
     isVisible?: boolean;
     isLoading?: boolean;
@@ -27,7 +27,7 @@ interface ChatMessageProps {
     textSize: string;
     isBotMessage: boolean;
     className?: string;
-    link?: string; // ChatMessage 컴포넌트에도 link prop 추가
+    link?: string;
 }
 
 const ChatMessage = ({
@@ -37,7 +37,7 @@ const ChatMessage = ({
     textSize,
     isBotMessage,
     className,
-    link, // link prop 받기
+    link,
 }: ChatMessageProps) => (
     <div
         className={`max-w-[260px] px-4 py-2.5 inline-flex items-center gap-2.5 overflow-hidden ${
@@ -47,16 +47,16 @@ const ChatMessage = ({
         } ${isLoading ? 'h-10' : 'min-h-[40px]'} ${className || ''}`}
     >
         {isVisible ? (
-            link ? ( // 링크가 있을 경우 <a> 태그로 렌더링
-                <a 
-                    href={link} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+            link ? (
+                <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={`text-base font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap underline text-blue-600 hover:text-blue-800 visited:text-purple-600 ${textSize}`}
                 >
                     {text}
                 </a>
-            ) : ( // 링크가 없을 경우 일반 텍스트 렌더링
+            ) : (
                 <div
                     className={`text-base font-normal font-['Inter'] leading-tight break-words whitespace-pre-wrap ${textSize}`}
                 >
@@ -100,12 +100,12 @@ const ChatProfileIconAndNickname = ({
 
 const ChatPage = () => {
     const [chatHistory, setChatHistory] = useState<ChatMessageItem[]>([]);
-    const [inputVisible, setInputVisible] = useState(false);
+    const [inputVisible, setInputVisible] = useState(true);
     const [inputText, setInputText] = useState('');
     const [textSize] = useState('text-base');
     const [showConfirmationButtons, setShowConfirmationButtons] = useState(false);
-    const [showLinkConfirmationButtons, setShowLinkConfirmationButtons] = useState(false); // 링크 확인 버튼 상태
-    const [lastFetchedNewsLinks, setLastFetchedNewsLinks] = useState<any[]>([]); // 마지막으로 가져온 뉴스 링크 저장
+    const [showLinkConfirmationButtons, setShowLinkConfirmationButtons] = useState(false);
+    const [lastFetchedNewsLinks, setLastFetchedNewsLinks] = useState<any[]>([]);
 
     const [userInfo, setUserInfo] = useState({ nickname: '' });
     const isInitialLoadCompleted = useRef(false);
@@ -116,73 +116,83 @@ const ChatPage = () => {
     const profileIndex = savedIndex !== null ? parseInt(savedIndex) : 0;
     const selectedProfile = profileImages[profileIndex];
 
+    // 🔥 sessionStorage에서 대화 기록 불러오기
     useEffect(() => {
         if (isInitialLoadCompleted.current) return;
+
+        const saved = sessionStorage.getItem('mews_chat_state');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            setChatHistory(parsed.chatHistory || []);
+            setLastFetchedNewsLinks(parsed.lastFetchedNewsLinks || []);
+            isInitialLoadCompleted.current = true;
+            return;
+        }
+
         isInitialLoadCompleted.current = true;
 
         const userId = localStorage.getItem('userId');
-
-        // 로딩 상태 유지 시간 (ms)
         const LOADING_DURATION = 600;
-        // 텍스트 노출 후 다음 메시지 전 대기 시간 (ms)
-        const BETWEEN_MESSAGES_DELAY = 200;
+        const BETWEEN = 200;
 
-        const addInitialMessagesSequentially = async (msgs: { id: number; text: string; delay?: number }[]) => {
-            let currentMsgIdx = 0;
+        const addInitialMessagesSequentially = async (msgs: { id: number; text: string }[]) => {
+            let idx = 0;
+
             for (const msg of msgs) {
-                const loadingMessageId = Date.now() + currentMsgIdx * 2;
-                // 1) 로딩 메시지 추가
+                const loadingId = Date.now() + idx * 2;
+
                 setChatHistory((prev) => [
                     ...prev,
                     {
-                        id: loadingMessageId,
+                        id: loadingId,
                         sender: 'bot',
                         type: 'loading',
                         isLoading: true,
                         isVisible: false,
-                        showProfileBefore: currentMsgIdx === 0,
+                        showProfileBefore: idx === 0,
                     },
                 ]);
 
                 await new Promise((r) => setTimeout(r, LOADING_DURATION));
 
-                const textMessageId = Date.now() + currentMsgIdx * 2 + 1;
-                // 2) 로딩 메시지 삭제 후 텍스트 메시지 추가
-                setChatHistory((prev) =>
-                    [...prev.filter((m) => m.id !== loadingMessageId),
+                const textId = Date.now() + idx * 2 + 1;
+
+                setChatHistory((prev) => [
+                    ...prev.filter((m) => m.id !== loadingId),
                     {
-                        id: textMessageId,
+                        id: textId,
                         sender: 'bot',
                         type: 'text',
                         text: msg.text,
                         isVisible: true,
                         isLoading: false,
-                        showProfileBefore: currentMsgIdx === 0,
-                    }]
-                );
+                        showProfileBefore: idx === 0,
+                    },
+                ]);
 
-                await new Promise((r) => setTimeout(r, BETWEEN_MESSAGES_DELAY));
-
-                currentMsgIdx++;
+                await new Promise((r) => setTimeout(r, BETWEEN));
+                idx++;
             }
+
             setInputVisible(true);
         };
 
         if (userId) {
-            axios.get(`http://localhost:8080/api/user/${userId}`)
+            axios
+                .get(`http://localhost:8080/api/user/${userId}`)
                 .then((res) => {
                     setUserInfo(res.data);
-                    const initialMessages = [
+                    const initial = [
                         { id: 1, text: `안냥🐱~ 나는 너만의 앵커 ${res.data.nickname}이야!` },
                         { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야' },
                         { id: 3, text: '궁금한 뉴스가 있다면...' },
                         { id: 4, text: '나에게 말을 걸어줘!' },
                     ];
-                    addInitialMessagesSequentially(initialMessages);
+                    addInitialMessagesSequentially(initial);
                 })
                 .catch(() => {
                     const fallback = [
-                        { id: 1, text: `안냥🐱~ 너만의 앵커!` },
+                        { id: 1, text: '안냥🐱~ 너만의 앵커!' },
                         { id: 2, text: '보고 싶은 키워드를 입력하면 관련된 뉴스를 요약해서 보여줄 거야' },
                         { id: 3, text: '궁금한 뉴스가 있다면...' },
                         { id: 4, text: '나에게 말을 걸어줘!' },
@@ -191,7 +201,16 @@ const ChatPage = () => {
                 });
         }
     }, []);
+    // 🔥 chatHistory + lastFetchedNewsLinks 변경될 때만 sessionStorage 저장
+    useEffect(() => {
+        const data = {
+            chatHistory,
+            lastFetchedNewsLinks,
+        };
+        sessionStorage.setItem('mews_chat_state', JSON.stringify(data));
+    }, [chatHistory, lastFetchedNewsLinks]);
 
+    // 스크롤 유지
     useEffect(() => {
         if (!scrollRef.current) return;
         const timeout = setTimeout(() => {
@@ -206,12 +225,14 @@ const ChatPage = () => {
 
     const handleSendMessage = () => {
         if (!inputText.trim()) return;
+
         const newUserMessage: ChatMessageItem = {
             id: Date.now(),
             sender: 'user',
             type: 'text',
             text: inputText,
         };
+
         setChatHistory((prev) => [...prev, newUserMessage]);
         setInputText('');
         setInputVisible(false);
@@ -224,20 +245,21 @@ const ChatPage = () => {
             isVisible: false,
             showProfileBefore: true,
         };
+
         setChatHistory((prev) => [...prev, loadingBotMessage]);
 
         setTimeout(() => {
             setChatHistory((prev) =>
-                prev.map((msg) =>
-                    msg.id === loadingBotMessage.id
+                prev.map((m) =>
+                    m.id === loadingBotMessage.id
                         ? {
-                            ...msg,
-                            type: 'text',
-                            text: `입력한 검색어가 "${newUserMessage.text}" 맞아?`,
-                            isLoading: false,
-                            isVisible: true,
-                        }
-                        : msg
+                              ...m,
+                              type: 'text',
+                              text: `입력한 검색어가 "${newUserMessage.text}" 맞아?`,
+                              isLoading: false,
+                              isVisible: true,
+                          }
+                        : m
                 )
             );
             setShowConfirmationButtons(true);
@@ -249,248 +271,246 @@ const ChatPage = () => {
             id: performance.now(),
             sender: 'user',
             type: 'text',
-            text: reply
+            text: reply,
         };
         setChatHistory((prev) => [...prev, confirmMsg]);
-        setShowConfirmationButtons(false);
-        setInputVisible(false); // 사용자 응답 후 입력창 비활성화
 
-        // 첫 번째 로딩 애니메이션 (뉴스 검색 대기)
+        setShowConfirmationButtons(false);
+        setInputVisible(false);
+
         const loadingId1 = performance.now() + 1;
-        setChatHistory((prev) => [...prev, {
-            id: loadingId1,
-            sender: 'bot',
-            type: 'loading',
-            isLoading: true,
-            isVisible: false,
-            showProfileBefore: true
-        }]);
+
+        setChatHistory((prev) => [
+            ...prev,
+            {
+                id: loadingId1,
+                sender: 'bot',
+                type: 'loading',
+                isLoading: true,
+                isVisible: false,
+                showProfileBefore: true,
+            },
+        ]);
+
+        const lastKeyword =
+            chatHistory.filter((m) => m.sender === 'user' && m.type === 'text').slice(-1)[0]?.text || '';
 
         if (reply === '응!') {
-            const lastKeyword = chatHistory.filter((m) => m.sender === 'user' && m.type === 'text').slice(-1)[0]?.text || '';
-
             try {
-                // 키워드 저장 (POST)
                 await axios.post('http://localhost:8080/api/search/news', {
                     keyword: lastKeyword,
-                    userId: localStorage.getItem('userId')
+                    userId: localStorage.getItem('userId'),
                 });
 
                 setChatHistory((prev) =>
-                    prev.map((msg) =>
-                        msg.id === loadingId1
+                    prev.map((m) =>
+                        m.id === loadingId1
                             ? {
-                                ...msg,
-                                type: 'text',
-                                text: '좋아! 관련 뉴스를 찾아 요약해줄게. 잠시만 기다려 줘!',
-                                isLoading: false,
-                                isVisible: true
-                            }
-                            : msg
+                                  ...m,
+                                  type: 'text',
+                                  text: '좋아! 관련 뉴스를 찾아 요약해줄게. 잠시만 기다려 줘!',
+                                  isLoading: false,
+                                  isVisible: true,
+                              }
+                            : m
                     )
                 );
 
-// 뉴스 검색 (GET)
-const newsRes = await axios.get(
-  `http://localhost:8080/api/search/news?keyword=${encodeURIComponent(lastKeyword)}`
-);
-const newsList = newsRes.data;
-setLastFetchedNewsLinks(newsList); // 뉴스 링크 저장
+                // 뉴스 검색 (GET)
+                const newsRes = await axios.get(
+                    `http://localhost:8080/api/search/news?keyword=${encodeURIComponent(lastKeyword)}`
+                );
 
-// ✅ 요약문을 DB에서 GET으로 가져오기 (/api/summary)
-const userId = localStorage.getItem('userId');
-const summaryRes = await axios.get('http://localhost:8080/api/summary', {
-  params: { userId, keyword: lastKeyword },
-});
-const summaryText = summaryRes.data.summary;
+                const newsList = newsRes.data;
+                setLastFetchedNewsLinks(newsList);
 
-// ✅ 요약문을 문장 단위로 분리 후 3문장씩 묶어서 순차 출력
-if (summaryText && summaryText.trim().length > 0) {
-  // 1️⃣ 문장 단위로 분리 (. ! ? 기준)
-  const summaryParts = summaryText
-    .split(/(?<=[.!?])\s+/)
-    .filter((s) => s.trim().length > 0);
+                // 요약문 조회
+                const summaryRes = await axios.get('http://localhost:8080/api/summary', {
+                    params: {
+                        userId: localStorage.getItem('userId'),
+                        keyword: lastKeyword,
+                    },
+                });
 
-  // 2️⃣ 3문장씩 묶기
-  const groupedSummaries: string[] = [];
-  for (let i = 0; i < summaryParts.length; i += 3) {
-    groupedSummaries.push(summaryParts.slice(i, i + 3).join(' '));
-  }
+                const summaryText = summaryRes.data.summary;
 
-  // 3️⃣ 묶은 문단 순차 출력 (1.8초 간격)
-  groupedSummaries.forEach((chunk, idx) => {
-    setTimeout(() => {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          id: performance.now() + idx,
-          sender: 'bot',
-          type: 'text',
-          text: chunk.trim(),
-          isVisible: true,
-          isLoading: false,
-          showProfileBefore: idx === 0, // 첫 말풍선만 프로필 표시
-        },
-      ]);
-    }, idx * 1800);
-  });
+                if (summaryText && summaryText.trim().length > 0) {
+                    const summaryParts = summaryText
+                        .split(/(?<=[.!?])\s+/)
+                        .filter((s: string) => s.trim().length > 0);
 
-  // 4️⃣ 마지막 말풍선 출력 후 '관련 기사 링크' 메시지 표시
-  const totalDelay = groupedSummaries.length * 1800 + 1000;
-  setTimeout(() => {
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        id: performance.now() + 500,
-        sender: 'bot',
-        type: 'text',
-        text: '관련 기사 링크를 직접 볼래?',
-        isVisible: true,
-        isLoading: false,
-        showProfileBefore: true,
-      },
-    ]);
-    setShowLinkConfirmationButtons(true);
-  }, totalDelay);
-} else {
-  // 요약문이 없을 경우 기본 응답
-  const botMessage: ChatMessageItem = {
-    id: performance.now(),
-    sender: 'bot',
-    type: 'text',
-    text: '요약된 내용이 아직 없어요. 다시 시도해볼래?',
-    isVisible: true,
-    isLoading: false,
-    showProfileBefore: true,
-  };
-  setChatHistory((prev) => [...prev, botMessage]);
-}
+                    const groups: string[] = [];
+                    for (let i = 0; i < summaryParts.length; i += 3) {
+                        groups.push(summaryParts.slice(i, i + 3).join(' '));
+                    }
 
-} catch (error) {
-  console.error("뉴스 검색 또는 요약 API 호출 실패:", error);
-  setChatHistory((prev) =>
-    prev.map((msg) =>
-      msg.id === loadingId1
-        ? {
-            ...msg,
-            type: 'text',
-            text: '뉴스를 가져오거나 요약하는 데 실패했어. 다시 시도해줘!',
-            isLoading: false,
-            isVisible: true,
-          }
-        : msg
-    )
-  );
-  setInputVisible(true);
-}
-} else {
-  // '아니야' 답변
-  setTimeout(() => {
-    setChatHistory((prev) =>
-      prev.map((msg) =>
-        msg.id === loadingId1
-          ? {
-              ...msg,
-              type: 'text',
-              text: '아니구나! 다시 정확한 키워드를 입력해 줄래?',
-              isLoading: false,
-              isVisible: true,
+                    groups.forEach((chunk, idx) => {
+                        setTimeout(() => {
+                            setChatHistory((prev) => [
+                                ...prev,
+                                {
+                                    id: performance.now() + idx,
+                                    sender: 'bot',
+                                    type: 'text',
+                                    text: chunk.trim(),
+                                    isVisible: true,
+                                    isLoading: false,
+                                    showProfileBefore: idx === 0,
+                                },
+                            ]);
+                        }, idx * 1800);
+                    });
+
+                    const totalDelay = groups.length * 1800 + 1000;
+
+                    setTimeout(() => {
+                        setChatHistory((prev) => [
+                            ...prev,
+                            {
+                                id: performance.now() + 500,
+                                sender: 'bot',
+                                type: 'text',
+                                text: '관련 기사 링크를 직접 볼래?',
+                                isVisible: true,
+                                isLoading: false,
+                                showProfileBefore: true,
+                            },
+                        ]);
+                        setShowLinkConfirmationButtons(true);
+                    }, totalDelay);
+                } else {
+                    setChatHistory((prev) => [
+                        ...prev,
+                        {
+                            id: performance.now(),
+                            sender: 'bot',
+                            type: 'text',
+                            text: '요약된 내용이 아직 없어요. 다시 시도해볼래?',
+                            isVisible: true,
+                            isLoading: false,
+                            showProfileBefore: true,
+                        },
+                    ]);
+                }
+            } catch (err) {
+                console.error(err);
+
+                setChatHistory((prev) =>
+                    prev.map((m) =>
+                        m.id === loadingId1
+                            ? {
+                                  ...m,
+                                  type: 'text',
+                                  text: '뉴스를 가져오거나 요약하는 데 실패했어. 다시 시도해줘!',
+                                  isLoading: false,
+                                  isVisible: true,
+                              }
+                            : m
+                    )
+                );
+
+                setInputVisible(true);
             }
-          : msg
-      )
-    );
-    setInputVisible(true);
-  }, 1500);
-}
-};
-
+        } else {
+            setTimeout(() => {
+                setChatHistory((prev) =>
+                    prev.map((m) =>
+                        m.id === loadingId1
+                            ? {
+                                  ...m,
+                                  type: 'text',
+                                  text: '아니구나! 다시 정확한 키워드를 입력해 줄래?',
+                                  isLoading: false,
+                                  isVisible: true,
+                              }
+                            : m
+                    )
+                );
+                setInputVisible(true);
+            }, 1500);
+        }
+    };
 
     const onConfirmLinkReply = async (reply: string) => {
         const confirmMsg: ChatMessageItem = {
             id: performance.now(),
             sender: 'user',
             type: 'text',
-            text: reply
+            text: reply,
         };
         setChatHistory((prev) => [...prev, confirmMsg]);
-        setShowLinkConfirmationButtons(false); // 링크 확인 버튼 숨기기
-        setInputVisible(false); // 사용자 응답 후 입력창 비활성화
+        setShowLinkConfirmationButtons(false);
+        setInputVisible(false);
 
-if (reply === '응!') {
-  // ✅ 뉴스 중 가장 최신 3개만 선택
-  const recentNews = lastFetchedNewsLinks.slice(0, 3);
+        if (reply === '응!') {
+            const recent = lastFetchedNewsLinks.slice(0, 3);
 
-  // 뉴스 링크들을 순차적으로 표시
-  for (let i = 0; i < recentNews.length; i++) {
-    const news = recentNews[i];
-    const loadingMessageId = performance.now() + 600 + i * 2;
-    const textMessageId = performance.now() + 601 + i * 2;
+            for (let i = 0; i < recent.length; i++) {
+                const item = recent[i];
 
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        id: loadingMessageId,
-        sender: 'bot',
-        type: 'loading',
-        isLoading: true,
-        isVisible: false,
-        showProfileBefore: i === 0, // 첫 번째 링크 메시지에만 프로필 표시
-      },
-    ]);
+                const loadingId = performance.now() + 600 + i * 2;
+                const textId = performance.now() + 601 + i * 2;
 
-    await new Promise((resolve) => setTimeout(resolve, 800)); // 로딩 애니메이션 시간
+                setChatHistory((prev) => [
+                    ...prev,
+                    {
+                        id: loadingId,
+                        sender: 'bot',
+                        type: 'loading',
+                        isLoading: true,
+                        isVisible: false,
+                        showProfileBefore: i === 0,
+                    },
+                ]);
 
-    setChatHistory((prev) => {
-      const filteredPrev = prev.filter((m) => m.id !== loadingMessageId);
-      return [
-        ...filteredPrev,
-        {
-          id: textMessageId,
-          sender: 'bot',
-          type: 'link', // type을 'link'로 설정
-          text: news.title, // 링크 텍스트는 뉴스 제목
-          link: news.url, // 실제 링크 URL
-          isVisible: true,
-          isLoading: false,
-          showProfileBefore: i === 0,
-        },
-      ];
-    });
+                await new Promise((r) => setTimeout(r, 800));
 
-    if (i < recentNews.length - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // 각 링크 메시지 사이 간격
-    }
-  }
+                setChatHistory((prev) => [
+                    ...prev.filter((m) => m.id !== loadingId),
+                    {
+                        id: textId,
+                        sender: 'bot',
+                        type: 'link',
+                        text: item.title,
+                        link: item.url,
+                        isVisible: true,
+                        isLoading: false,
+                        showProfileBefore: i === 0,
+                    },
+                ]);
 
-  // 모든 링크가 표시된 후 입력창 활성화
-  setInputVisible(true);
-} else {
-  // '아니야' 답변
-  setTimeout(() => {
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        id: performance.now() + 700,
-        sender: 'bot',
-        type: 'text',
-        text: '알겠어! 다른 궁금한 점이 있다면 언제든지 물어봐!',
-        isVisible: true,
-        isLoading: false,
-        showProfileBefore: true,
-      },
-    ]);
-    setInputVisible(true);
-  }, 1500);
-}
+                if (i < recent.length - 1) {
+                    await new Promise((r) => setTimeout(r, 500));
+                }
+            }
 
+            setInputVisible(true);
+        } else {
+            setTimeout(() => {
+                setChatHistory((prev) => [
+                    ...prev,
+                    {
+                        id: performance.now() + 700,
+                        sender: 'bot',
+                        type: 'text',
+                        text: '알겠어! 다른 궁금한 점이 있다면 언제든지 물어봐!',
+                        isVisible: true,
+                        isLoading: false,
+                        showProfileBefore: true,
+                    },
+                ]);
+                setInputVisible(true);
+            }, 1500);
+        }
     };
-
-
     return (
         <div className="relative h-full w-full">
             <div className="overflow-y-auto h-full px-8 pt-5 pb-[72px] flex flex-col">
-                {chatHistory.map((msg, idx) => (
-                    <div key={msg.id} className={`mb-2 last:mb-0 ${msg.sender === 'user' ? 'self-end' : 'self-start'}`}>
+                {chatHistory.map((msg) => (
+                    <div
+                        key={msg.id}
+                        className={`mb-2 last:mb-0 ${msg.sender === 'user' ? 'self-end' : 'self-start'}`}
+                    >
                         {msg.sender === 'bot' ? (
                             <div className="flex flex-col items-start">
                                 {msg.showProfileBefore && (
@@ -506,7 +526,7 @@ if (reply === '응!') {
                                     textSize={textSize}
                                     isBotMessage
                                     className="ml-[calc(40px+8px)]"
-                                    link={msg.link} // link prop 전달
+                                    link={msg.link}
                                 />
                             </div>
                         ) : (
@@ -516,17 +536,15 @@ if (reply === '응!') {
                                 text={msg.text ?? ''}
                                 textSize={textSize}
                                 isBotMessage={false}
-                                link={msg.link} // link prop 전달
+                                link={msg.link}
                             />
                         )}
                     </div>
                 ))}
 
-                {/* ⬇️ 스크롤 앵커, 여유 공간 확보 */}
                 <div ref={scrollRef} className="mt-[140px]" />
             </div>
 
-            {/* 입력창 */}
             <div className="fixed bottom-[56px] left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 py-4 bg-white border-l border-r border-gray-200">
                 {showConfirmationButtons ? (
                     <div className="flex justify-center gap-2">
@@ -543,7 +561,7 @@ if (reply === '응!') {
                             아니야
                         </button>
                     </div>
-                ) : showLinkConfirmationButtons ? ( // 링크 확인 버튼 조건 추가
+                ) : showLinkConfirmationButtons ? (
                     <div className="flex justify-center gap-2">
                         <button
                             onClick={() => onConfirmLinkReply('응!')}
