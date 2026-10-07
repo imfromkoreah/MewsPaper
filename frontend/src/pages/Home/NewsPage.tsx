@@ -1,0 +1,223 @@
+import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import GrayDot from '../../assets/svg/graydot.svg';
+import Paper from '../../assets/images/Paper.png';
+import HTMLFlipBook from 'react-pageflip';
+import { useNavigate } from 'react-router-dom';
+
+const tabs = [
+  { id: 'politics', label: '정치', categoryId: 100 },
+  { id: 'economy', label: '경제', categoryId: 101 },
+  { id: 'society', label: '사회', categoryId: 102 },
+  { id: 'culture', label: '생활/문화', categoryId: 103, width: 62 },
+  { id: 'world', label: '세계', categoryId: 104 },
+  { id: 'it', label: 'IT/과학', categoryId: 105, width: 62 },
+];
+
+type Article = {
+  uniqueLink: string;
+  title: string;
+  content: string;
+  summary?: string;
+  categoryId: number;
+  source: string;
+  publishedDate: string;
+  url: string;
+  thumbnailUrl: string;
+  bias: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export default function News() {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('politics');
+  const [barStyle, setBarStyle] = useState({ left: 0, width: 0 });
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [flipKey, setFlipKey] = useState(0);
+  const tabsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const flipBookRef = useRef<any>(null);
+
+  useEffect(() => {
+    const index = tabs.findIndex(tab => tab.id === activeTab);
+    const tabEl = tabsRef.current[index];
+    if (tabEl) {
+      const left = tabEl.offsetLeft - 12;
+      const width = tabEl.offsetWidth + 24;
+      setBarStyle({ left, width });
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const selected = tabs.find(tab => tab.id === activeTab);
+    if (!selected) return;
+
+    axios
+      .get(`http://localhost:8080/api/news?categoryId=${selected.categoryId}`)
+      .then(res => {
+        setArticles(res.data || []);
+        setFlipKey(prev => prev + 1);
+      })
+      .catch(err => {
+        console.error('뉴스 로딩 실패:', err);
+        setArticles([]);
+      });
+  }, [activeTab]);
+
+  const handleContentClick = (e: React.MouseEvent, uniqueLink: string, rank: number) => {
+    e.stopPropagation();
+    navigate(`/news/detail?link=${encodeURIComponent(uniqueLink)}&rank=${rank}`);
+  };
+
+  return (
+    <main className="w-full flex flex-col items-center relative">
+      {/* 상단 탭 */}
+      <div className="w-full h-[93px] relative mx-auto">
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 text-black text-[20px] font-bold leading-tight">
+          Top 10 뉴스
+        </div>
+        <div className="absolute left-1/2 top-[24px] flex items-center space-x-1 -translate-x-1/2 mt-1">
+          <span className="text-black/60 text-[12px] font-normal leading-tight">
+            카테고리별 뉴스 하이라이트
+          </span>
+          <img src={GrayDot} width={13} height={13} alt="gray dot" />
+        </div>
+        <div className="absolute top-[66px] flex justify-center w-full text-black/60 text-base font-bold leading-tight space-x-[24px]">
+          {tabs.map((tab, i) => (
+            <div
+              key={tab.id}
+              ref={el => { tabsRef.current[i] = el; }}
+              className={`cursor-pointer ${activeTab === tab.id ? 'text-[#6a4dff]' : ''}`}
+              style={{
+                width: tab.width ? `${tab.width}px` : '35px',
+                fontSize: '15px',
+                whiteSpace: 'nowrap',
+              }}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </div>
+          ))}
+        </div>
+        <div className="w-full h-1.5 absolute left-0 top-[89px] bg-[#e8ebed] rounded-[100px] overflow-hidden">
+          <div
+            className="h-full bg-[#6a4dff] rounded-[100px] transition-all duration-300"
+            style={{
+              width: barStyle.width,
+              transform: `translateX(${barStyle.left}px)`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 본문 영역 */}
+      <div className="relative mt-[60px] w-[400px] h-[470px]">
+        <img
+          src={Paper}
+          alt="신문 배경"
+          className="w-full h-full absolute top-0 left-0 z-0 object-cover"
+        />
+
+        {articles.length === 0 ? (
+          <div className="flex justify-center items-center w-full h-full text-gray-500 font-semibold z-20 relative">
+            해당 카테고리의 뉴스가 없습니다.
+          </div>
+        ) : (
+          <HTMLFlipBook
+            key={flipKey}
+            ref={flipBookRef}
+            width={342}
+            height={465}
+            className="relative z-20 overflow-hidden"
+            showCover={false}
+            size="fixed"
+            maxShadowOpacity={0.3}
+            mobileScrollSupport={true}
+            style={{
+              boxSizing: 'border-box',
+              backgroundColor: 'transparent',
+              marginTop: '-40px',
+            }}
+          >
+            {articles.map((article, index) => (
+              <div
+                key={article.uniqueLink}
+                className="flex flex-col items-center justify-start bg-[#E4E4E4]/70 shadow-md h-full p-5 box-border rounded-md"
+                style={{
+                  maxWidth: '430px',
+                  maxHeight: '490px',
+                  backgroundColor: 'transparent',
+                }}
+              >
+                {/* 제목 영역 */}
+                <div className="w-full flex justify-start mb-3">
+                  <div className="px-3 py-1 bg-[#6B4EFF]/70 rounded-2xl inline-block">
+                    <div className="text-[#ffffff] text-sm font-medium">
+                      {tabs.find(t => t.id === activeTab)?.label}{' '}
+                      <span className="font-bold">{index + 1}위</span>
+                    </div>
+                  </div>
+                </div>
+
+                <h3
+                  className="font-bold text-lg mb-2 w-full max-w-[350px] text-left line-clamp-2
+                             cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
+                  onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
+                >
+                  {article.title}
+                </h3>
+                <p className="mb-2 text-sm text-gray-600">{article.createdAt}</p>
+                <div className="w-full max-w-[350px] border-b border-gray-300 mb-4" />
+
+                {/* 썸네일 */}
+                <img
+                  src={article.thumbnailUrl}
+                  alt="썸네일"
+                  className="max-w-[250px] max-h-[150px] mb-3 rounded shadow cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
+                  onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
+                />
+
+                {/* ✅ 간단 요약 (보라색 세로줄이 텍스트 높이에 따라 자동 늘어남) */}
+                <div
+                  className="flex flex-row gap-3 w-full max-w-[330px] mt-4
+                             cursor-pointer transition-transform duration-200 ease-in-out hover:scale-[1.01]"
+                  onClick={(e) => handleContentClick(e, article.uniqueLink, index + 1)}
+                >
+                  {/* 보라색 세로줄 */}
+                  <div className="w-[5px] bg-[#6a4dff] rounded-full self-stretch flex-shrink-0" />
+
+                  {/* 텍스트 영역 */}
+                  <div className="flex flex-col gap-1 text-left">
+                    <p className="text-sm font-bold text-[#000]">간단 요약🔍</p>
+
+                    {article.summary ? (
+                      <p
+                        className="text-[13px] leading-relaxed text-gray-800 px-1 text-justify
+                                   overflow-hidden text-ellipsis line-clamp-4"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {article.summary}
+                      </p>
+                    ) : (
+                      <p className="text-[13px] text-gray-500 px-1">
+                        요약 준비 중입니다 😺
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </HTMLFlipBook>
+        )}
+      </div>
+
+      <p className="mt-6 mb-10 text-sm text-black font-medium">
+        뉴스를 클릭하면 <span className="underline underline-offset-2">상세 페이지</span>로 이동해요 🐱
+      </p>
+    </main>
+  );
+}
